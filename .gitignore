@@ -1,0 +1,88 @@
+# Build results
+bin/
+obj/
+*.dll
+*.exe
+*.pdb
+*.so
+*.dylib
+
+# Visual Studio / IDE
+.vs/
+.vscode/
+.idea/
+*.sln.iml
+*.user
+*.userosscache
+*.suo
+*.sln.iml
+*.vcxproj.filters
+
+# MAUI specific
+.maui/
+
+# NuGet
+*.nupkg
+*.snupkg
+.nuget/
+
+# User-specific files
+appsettings.local.json
+appsettings.Development.json
+appsettings.Production.json
+
+# Local database files
+*.db
+*.db-shm
+*.db-wal
+journaldaily.db
+
+# Rider cache
+.idea/
+*.iml
+.riders/
+
+# OS-specific
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+
+# Node modules (if using npm packages)
+node_modules/
+npm-debug.log
+
+# Output folders
+dist/
+publish/
+PublishProfiles/
+
+# JetBrains IDE
+.idea/
+*.iml
+
+# Rider specific
+.rider/
+
+# Generated files
+*.g.cs
+
+# Test results
+TestResults/
+
+# Coverage reports
+coverage/
+
+# Package lock (optional - remove if you want to track it)
+# package-lock.json
+
+# Backup files
+*.bak
+*.backup
+*.orig

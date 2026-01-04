@@ -1,0 +1,113 @@
+@page "/entries"
+@using JournalDaily.Models
+@using JournalDaily.Services
+@inject JournalService JournalService
+@inject NavigationManager Navigation
+
+<h3>Entries</h3>
+
+<div class="mb-2">
+    <input class="form-control" placeholder="Search title or content" @bind="query" />
+</div>
+
+<div class="mb-2">
+    <label>Date range</label>
+    <input type="date" class="me-2" value="@fromString" @onchange="e => fromString = e.Value?.ToString() ?? string.Empty" />
+    <input type="date" value="@toString" @onchange="e => toString = e.Value?.ToString() ?? string.Empty" />
+</div>
+
+<div class="mb-2">
+    <label>Tags (comma-separated)</label>
+    <input class="form-control" @bind="tagsCsv" />
+</div>
+
+<div class="mb-2">
+    <button class="btn btn-primary me-2" @onclick="ApplyFilters">Apply</button>
+    <button class="btn btn-secondary" @onclick="ClearFilters">Clear</button>
+</div>
+
+<div>
+    @if (entries is null)
+    {
+        <p>Loading...</p>
+    }
+    else if (!entries.Any())
+    {
+        <p>No entries</p>
+    }
+    else
+    {
+        <ul class="list-group">
+            @foreach(var e in paged)
+            {
+                <li class="list-group-item">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <strong>@(e.Title ?? "(no title)")</strong>
+                            <div class="text-muted">@e.EntryDate.ToString("yyyy-MM-dd")</div>
+                            <div class="mt-1">@((MarkupString)TruncateHtml(Markdig.Markdown.ToHtml(e.Content ?? string.Empty), 200))</div>
+                        </div>
+                        <div>
+                            <button class="btn btn-sm btn-link" @onclick="() => Edit(e.EntryDate)">Edit</button>
+                        </div>
+                    </div>
+                </li>
+            }
+        </ul>
+
+        <div class="mt-2">
+            <button class="btn btn-secondary me-2" @onclick="PrevPage" disabled="@(pageIndex==0)">Previous</button>
+            <button class="btn btn-secondary" @onclick="NextPage" disabled="@( (pageIndex+1)*pageSize >= entries.Count )">Next</button>
+        </div>
+    }
+</div>
+}
+
+@code {
+    private string? query;
+    private DateTime? from;
+    private DateTime? to;
+    private string? fromString { get => from?.ToString("yyyy-MM-dd") ?? string.Empty; set { if (DateTime.TryParse(value, out var dt)) from = dt.Date; else from = null; } }
+    private string? toString { get => to?.ToString("yyyy-MM-dd") ?? string.Empty; set { if (DateTime.TryParse(value, out var dt)) to = dt.Date; else to = null; } }
+    private string? tagsCsv;
+
+    private List<JournalEntry>? entries;
+    private int pageIndex = 0;
+    private int pageSize = 10;
+    private IEnumerable<JournalEntry> paged => entries?.Skip(pageIndex*pageSize).Take(pageSize) ?? Enumerable.Empty<JournalEntry>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAll();
+    }
+
+    private async Task LoadAll()
+    {
+        entries = await JournalService.SearchEntriesAsync(query, from, to, null, null);
+    }
+
+    private async Task ApplyFilters()
+    {
+        var tagList = (tagsCsv ?? string.Empty).Split(',', StringSplitOptions.RemoveEmptyEntries).Select(t => t.Trim()).Where(t => !string.IsNullOrEmpty(t));
+        entries = await JournalService.SearchEntriesAsync(query, from, to, null, tagList);
+        pageIndex = 0;
+    }
+
+    private async Task ClearFilters()
+    {
+        query = string.Empty; from = null; to = null; tagsCsv = string.Empty; pageIndex = 0;
+        await LoadAll();
+    }
+
+    private void Edit(DateTime date) => Navigation.NavigateTo($"journal?date={date:yyyy-MM-dd}");
+
+    private void PrevPage() { if (pageIndex>0) pageIndex--; }
+    private void NextPage() { if (entries!=null && (pageIndex+1)*pageSize < entries.Count) pageIndex++; }
+
+    private static string TruncateHtml(string html, int max)
+    {
+        if (string.IsNullOrEmpty(html)) return string.Empty;
+        if (html.Length <= max) return html;
+        return html.Substring(0, max) + "...";
+    }
+}

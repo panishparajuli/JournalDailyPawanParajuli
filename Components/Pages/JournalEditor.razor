@@ -1,0 +1,180 @@
+@page "/journal"
+@using JournalDaily.Models
+@using JournalDaily.Services
+@inject JournalService JournalService
+@inject NavigationManager Navigation
+
+<h3>Journal Editor</h3>
+
+<div class="mb-2">
+    <label>Date</label>
+    <input type="date" class="form-control" value="@selectedDateString" @onchange="e => selectedDateString = e.Value?.ToString() ?? string.Empty" />
+</div>
+
+<div class="mb-2">
+    <label>Title</label>
+    <input class="form-control" @bind="title" />
+</div>
+
+<div class="mb-2">
+    <label>Content (Markdown)</label>
+    <textarea rows="10" class="form-control" @bind="content"></textarea>
+    <div class="mt-2">
+        <button class="btn btn-secondary" @onclick="TogglePreview">Toggle Preview</button>
+    </div>
+    @if (showPreview)
+    {
+        <div class="card mt-2 p-2">
+            @((MarkupString)Markdig.Markdown.ToHtml(content ?? string.Empty))
+        </div>
+    }
+</div>
+
+<div class="mb-2">
+    <label>Primary Mood (required)</label>
+    <select class="form-control" @bind="primaryMood">
+        <option value="">-- choose --</option>
+        @foreach(var m in moodOptions)
+        {
+            <option value="@m">@m</option>
+        }
+    </select>
+</div>
+
+<div class="mb-2">
+    <label>Secondary Moods (up to 2)</label>
+    <div>
+        @foreach(var m in moodOptions)
+        {
+            <label class="me-2"><input type="checkbox" value="@m" @onchange="OnSecondaryChanged" checked="@secondaryMoods.Contains(m)" /> @m</label>
+        }
+    </div>
+</div>
+
+<div class="mb-2">
+    <label>Tags (comma-separated)</label>
+    <input class="form-control" @bind="tagsCsv" />
+</div>
+
+<div class="mt-3">
+    <button class="btn btn-primary me-2" @onclick="Save">Save</button>
+    <button class="btn btn-danger" @onclick="Delete">Delete</button>
+    <button class="btn btn-link" @onclick="Back">Back</button>
+</div>
+
+@code {
+    private DateTime selectedDate = DateTime.Today;
+    private string selectedDateString
+    {
+        get => selectedDate.ToString("yyyy-MM-dd");
+        set
+        {
+            if (DateTime.TryParse(value, out var dt))
+            {
+                selectedDate = dt.Date;
+                _ = LoadEntry();
+            }
+        }
+    }
+
+    private string? title;
+    private string? content;
+    private bool showPreview = false;
+    private List<string> moodOptions = new() { "Happy", "Excited", "Relaxed", "Grateful", "Confident", "Calm", "Thoughtful", "Curious", "Nostalgic", "Bored", "Sad", "Angry", "Stressed", "Lonely", "Anxious" };
+    private string? primaryMood;
+    private HashSet<string> secondaryMoods = new();
+    private string? tagsCsv;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // read optional ?date=yyyy-MM-dd query parameter
+        try
+        {
+            var uri = new Uri(Navigation.Uri);
+            var q = uri.Query?.TrimStart('?');
+            if (!string.IsNullOrEmpty(q))
+            {
+                var parts = q.Split('&', StringSplitOptions.RemoveEmptyEntries);
+                foreach (var p in parts)
+                {
+                    var kv = p.Split('=', 2);
+                    if (kv.Length == 2 && kv[0] == "date")
+                    {
+                        var val = Uri.UnescapeDataString(kv[1]);
+                        if (DateTime.TryParse(val, out var dt))
+                        {
+                            selectedDate = dt.Date;
+                        }
+                    }
+                }
+            }
+        }
+        catch
+        {
+            // ignore parsing errors and continue with today
+        }
+
+        await LoadEntry();
+    }
+
+    private async Task LoadEntry()
+    {
+        var entry = await JournalService.GetEntryByDateAsync(selectedDate);
+        if (entry != null)
+        {
+            title = entry.Title;
+            content = entry.Content;
+            primaryMood = entry.EntryMoods.FirstOrDefault(em => em.IsPrimary)?.Mood?.Name;
+            secondaryMoods = entry.EntryMoods.Where(em => !em.IsPrimary).Select(em => em.Mood?.Name ?? string.Empty).Where(n => !string.IsNullOrEmpty(n)).ToHashSet();
+            tagsCsv = string.Join(", ", entry.EntryTags.Select(et => et.Tag?.Name ?? string.Empty).Where(n => !string.IsNullOrEmpty(n)));
+        }
+        else
+        {
+            title = string.Empty;
+            content = string.Empty;
+            primaryMood = string.Empty;
+            secondaryMoods.Clear();
+            tagsCsv = string.Empty;
+        }
+        StateHasChanged();
+    }
+
+    private void TogglePreview() => showPreview = !showPreview;
+
+    private void OnSecondaryChanged(ChangeEventArgs e)
+    {
+        var value = e.Value?.ToString();
+        if (string.IsNullOrEmpty(value)) return;
+
+        if (secondaryMoods.Contains(value)) secondaryMoods.Remove(value);
+        else if (secondaryMoods.Count < 2) secondaryMoods.Add(value);
+    }
+
+    private async Task Save()
+    {
+        if (string.IsNullOrWhiteSpace(primaryMood))
+        {
+            // simple validation
+            return;
+        }
+
+        var entry = new JournalEntry
+        {
+            EntryDate = selectedDate,
+            Title = title,
+            Content = content
+        };
+
+        var tags = (tagsCsv ?? string.Empty).Split(',', StringSplitOptions.RemoveEmptyEntries).Select(t => t.Trim());
+        await JournalService.UpsertEntryAsync(entry, tags, secondaryMoods, primaryMood);
+        Navigation.NavigateTo("entries");
+    }
+
+    private async Task Delete()
+    {
+        await JournalService.DeleteEntryAsync(selectedDate);
+        await LoadEntry();
+    }
+
+    private void Back() => Navigation.NavigateTo("entries");
+}

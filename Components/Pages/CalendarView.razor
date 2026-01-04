@@ -1,0 +1,86 @@
+@page "/calendar"
+@using JournalDaily.Services
+@inject JournalService JournalService
+@inject NavigationManager Navigation
+
+<h3>Calendar</h3>
+
+<div class="mb-2">
+    <button class="btn btn-secondary me-2" @onclick="PrevMonth">Previous</button>
+    <button class="btn btn-secondary" @onclick="NextMonth">Next</button>
+    <span class="ms-3">@displayMonth.ToString("MMMM yyyy")</span>
+    <button class="btn btn-link ms-3" @onclick="Today">Today</button>
+</div>
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Sun</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach(var week in calendar)
+        {
+            <tr>
+                @foreach(var day in week)
+                {
+                    <td class="@(day.HasEntry? "table-success" : string.Empty)">
+                        <div>@day.Date.Day</div>
+                        <div>
+                            <button class="btn btn-sm btn-link" @onclick="() => Open(day.Date)">Open</button>
+                        </div>
+                    </td>
+                }
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    private DateTime displayMonth = DateTime.Today;
+    private List<List<CalendarDay>> calendar = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        BuildCalendar();
+    }
+
+    private void BuildCalendar()
+    {
+        calendar.Clear();
+        var firstOfMonth = new DateTime(displayMonth.Year, displayMonth.Month, 1);
+        var start = firstOfMonth.AddDays(-(int)firstOfMonth.DayOfWeek);
+        for (int w = 0; w < 6; w++)
+        {
+            var week = new List<CalendarDay>();
+            for (int d = 0; d < 7; d++)
+            {
+                var date = start.AddDays(w * 7 + d);
+                week.Add(new CalendarDay { Date = date, HasEntry = false });
+            }
+            calendar.Add(week);
+        }
+        _ = MarkEntries();
+    }
+
+    private async Task MarkEntries()
+    {
+        // naive: check each day for an entry
+        foreach(var week in calendar)
+        {
+            foreach(var day in week)
+            {
+                var e = await JournalService.GetEntryByDateAsync(day.Date);
+                day.HasEntry = e != null;
+            }
+        }
+        StateHasChanged();
+    }
+
+    private void PrevMonth() { displayMonth = displayMonth.AddMonths(-1); BuildCalendar(); }
+    private void NextMonth() { displayMonth = displayMonth.AddMonths(1); BuildCalendar(); }
+    private void Today() { displayMonth = DateTime.Today; BuildCalendar(); }
+    private void Open(DateTime date) => Navigation.NavigateTo($"journal?date={date:yyyy-MM-dd}");
+
+    private class CalendarDay { public DateTime Date { get; set; } public bool HasEntry { get; set; } }
+}
