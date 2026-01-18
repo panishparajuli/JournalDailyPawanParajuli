@@ -1,0 +1,246 @@
+@page "/export"
+@using JournalDaily.ViewModels
+@inject PdfExportViewModel ViewModel
+
+<div class="export-container">
+    <div class="export-card">
+        <!-- Header -->
+        <div class="export-header">
+            <h1>📄 Export to PDF</h1>
+            <p class="subtitle">Select a date range and export your journal entries</p>
+        </div>
+
+        <!-- Date Range Selection -->
+        <div class="date-range-section">
+            <div class="date-inputs">
+                <!-- Start Date -->
+                <div class="date-group">
+                    <label for="start-date">Start Date</label>
+                    <input type="date" 
+                           id="start-date"
+                           @bind="ViewModel.StartDate"
+                           class="date-input"
+                           disabled="@ViewModel.IsLoading" />
+                </div>
+
+                <!-- End Date -->
+                <div class="date-group">
+                    <label for="end-date">End Date</label>
+                    <input type="date" 
+                           id="end-date"
+                           @bind="ViewModel.EndDate"
+                           class="date-input"
+                           disabled="@ViewModel.IsLoading" />
+                </div>
+            </div>
+
+            <!-- Date Range Info -->
+            <div class="date-info">
+                <span>📅 @ViewModel.DateRangeInfo</span>
+            </div>
+        </div>
+
+        <!-- Quick Presets -->
+        <div class="presets-section">
+            <p class="presets-label">Quick Select:</p>
+            <div class="presets-grid">
+                <button class="preset-btn" 
+                        @onclick="SetPresetToday"
+                        disabled="@ViewModel.IsLoading">
+                    Today
+                </button>
+                <button class="preset-btn" 
+                        @onclick="SetPresetWeek"
+                        disabled="@ViewModel.IsLoading">
+                    This Week
+                </button>
+                <button class="preset-btn" 
+                        @onclick="SetPresetMonth"
+                        disabled="@ViewModel.IsLoading">
+                    This Month
+                </button>
+                <button class="preset-btn" 
+                        @onclick="SetPresetYear"
+                        disabled="@ViewModel.IsLoading">
+                    This Year
+                </button>
+            </div>
+        </div>
+
+        <!-- Status Message -->
+        @if (!string.IsNullOrEmpty(ViewModel.StatusMessage))
+        {
+            <div class="status-message @(ViewModel.ShowSuccess ? "success" : "info")">
+                <span>@ViewModel.StatusMessage</span>
+                @if (ViewModel.ShowSuccess)
+                {
+                    <button class="btn-close" @onclick="ClearStatus">✕</button>
+                }
+            </div>
+        }
+
+        <!-- Last Export Result -->
+        @if (ViewModel.LastExportResult != null && ViewModel.LastExportResult.IsSuccess)
+        {
+            <div class="export-result-card">
+                <h3>✅ Last Export</h3>
+                <div class="result-details">
+                    <p><strong>File:</strong> @ViewModel.LastExportResult.FileName</p>
+                    <p><strong>Entries:</strong> @ViewModel.LastExportResult.EntriesCount</p>
+                    <p><strong>Size:</strong> @FormatFileSize(ViewModel.LastExportResult.FileSizeBytes)</p>
+                    <p><strong>Range:</strong> @ViewModel.LastExportResult.DateRangeDisplay</p>
+                </div>
+                <div class="result-actions">
+                    <button class="btn-open" 
+                            @onclick="OpenLastExport"
+                            disabled="@ViewModel.IsLoading">
+                        📖 Open PDF
+                    </button>
+                </div>
+            </div>
+        }
+
+        <!-- Export Button -->
+        <button class="btn-export" 
+                @onclick="Export"
+                disabled="@(ViewModel.IsLoading || ViewModel.EndDate < ViewModel.StartDate)">
+            @if (ViewModel.IsLoading)
+            {
+                <span>⏳ Generating PDF...</span>
+            }
+            else
+            {
+                <span>📥 Export to PDF</span>
+            }
+        </button>
+
+        <!-- Exported Files Section -->
+        @if (ViewModel.ExportedFiles.Count > 0)
+        {
+            <div class="exported-files-section">
+                <h2>📁 Previous Exports</h2>
+                <p class="files-count">@ViewModel.ExportedFiles.Count @(ViewModel.ExportedFiles.Count == 1 ? "file" : "files")</p>
+
+                <div class="files-list">
+                    @foreach (var file in ViewModel.ExportedFiles)
+                    {
+                        <div class="file-item">
+                            <div class="file-info">
+                                <p class="file-name">📄 @file.FileName</p>
+                                <p class="file-details">@file.CreatedDateDisplay • @file.FileSizeDisplay</p>
+                            </div>
+                            <div class="file-actions">
+                                <button class="btn-file-action btn-open"
+                                        @onclick="@((e) => OpenFile(file))"
+                                        title="Open PDF"
+                                        disabled="@ViewModel.IsLoading">
+                                    📖
+                                </button>
+                                <button class="btn-file-action btn-delete"
+                                        @onclick="@((e) => DeleteFile(file))"
+                                        title="Delete file"
+                                        disabled="@ViewModel.IsLoading">
+                                    🗑️
+                                </button>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <button class="btn-refresh" @onclick="RefreshFiles">
+                    🔄 Refresh List
+                </button>
+            </div>
+        }
+        else if (!ViewModel.IsLoading)
+        {
+            <div class="empty-state">
+                <p>📭 No exported files yet.</p>
+                <p class="empty-hint">Export your journal entries to create your first PDF.</p>
+            </div>
+        }
+
+        <!-- Help/Info -->
+        <div class="export-info">
+            <p>💡 <strong>Tip:</strong> Your exported PDFs are saved locally on your device.</p>
+            <p>🔒 <strong>Privacy:</strong> No files are uploaded to the cloud.</p>
+            <p>📊 <strong>Includes:</strong> Date, title, mood, content, and tags for each entry.</p>
+        </div>
+    </div>
+</div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        ViewModel?.Initialize();
+    }
+
+    private void SetPresetToday() 
+    { 
+        ViewModel.SetDatePreset("today"); 
+    }
+
+    private void SetPresetWeek() 
+    { 
+        ViewModel.SetDatePreset("week"); 
+    }
+
+    private void SetPresetMonth() 
+    { 
+        ViewModel.SetDatePreset("month"); 
+    }
+
+    private void SetPresetYear() 
+    { 
+        ViewModel.SetDatePreset("year"); 
+    }
+
+    private string FormatFileSize(long bytes)
+    {
+        if (bytes < 1024)
+            return $"{bytes} B";
+        else if (bytes < 1024 * 1024)
+            return $"{bytes / 1024.0:F1} KB";
+        else
+            return $"{bytes / (1024.0 * 1024):F1} MB";
+    }
+
+    private void ClearStatus()
+    {
+        ViewModel.ClearStatusCommand.Execute(null);
+    }
+
+    private void OpenLastExport()
+    {
+        if (ViewModel.LastExportResult != null)
+        {
+            var fileInfo = new ExportedFileInfo 
+            { 
+                FullPath = ViewModel.LastExportResult.FilePath, 
+                FileName = ViewModel.LastExportResult.FileName 
+            };
+            ViewModel.OpenPdfCommand.Execute(fileInfo);
+        }
+    }
+
+    private void Export()
+    {
+        ViewModel.ExportCommand.Execute(null);
+    }
+
+    private void OpenFile(ExportedFileInfo file)
+    {
+        ViewModel.OpenPdfCommand.Execute(file);
+    }
+
+    private void DeleteFile(ExportedFileInfo file)
+    {
+        ViewModel.DeleteFileCommand.Execute(file);
+    }
+
+    private void RefreshFiles()
+    {
+        ViewModel.RefreshFilesCommand.Execute(null);
+    }
+}

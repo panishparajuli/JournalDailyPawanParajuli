@@ -1,0 +1,144 @@
+@page "/pin-setup"
+@using JournalDaily.ViewModels
+@using JournalDaily.Services
+@inject PinViewModel ViewModel
+@inject NavigationManager Navigation
+@inject PinAuthService PinAuthService
+
+<div class="pin-container">
+    <div class="pin-card">
+        <!-- Header -->
+        <div class="pin-header">
+            <h1>🔐 Set Up Your PIN</h1>
+            <p class="subtitle">Create a 4-digit PIN to secure your journal</p>
+        </div>
+
+        <!-- PIN Display -->
+        <div class="pin-display">
+            <div class="pin-dots">
+                @for (int i = 0; i < 4; i++)
+                {
+                    <div class="pin-dot @(i < ViewModel.PinEntry.Length ? "filled" : "empty")"></div>
+                }
+            </div>
+        </div>
+
+        <!-- PIN Entry Display (for testing/debug - remove in production) -->
+        <div class="pin-entry-display">
+            @ViewModel.PinMaskDisplay
+        </div>
+
+        <!-- Error Message -->
+        @if (!string.IsNullOrEmpty(ViewModel.ErrorMessage))
+        {
+            <div class="error-message">
+                <span>⚠️ @ViewModel.ErrorMessage</span>
+            </div>
+        }
+
+        <!-- Numeric Keypad -->
+        <div class="numeric-keypad">
+            @for (int i = 1; i <= 9; i++)
+            {
+                int digit = i;
+                <button class="key-btn key-number" 
+                        @onclick="() => ViewModel.AddDigit(digit.ToString())"
+                        disabled="@(ViewModel.IsLoading)">
+                    @digit
+                </button>
+            }
+            <!-- 0 button spans full width -->
+            <button class="key-btn key-number" 
+                    style="grid-column:1/-1"
+                    @onclick="AddZero"
+                    disabled="@(ViewModel.IsLoading)">
+                0
+            </button>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="pin-actions">
+            <button class="btn-delete" @onclick="() => ViewModel.DeletePinDigitCommand.Execute(null)">
+                ⌫ Delete
+            </button>
+            <button class="btn-clear" @onclick="() => ViewModel.ClearPinCommand.Execute(null)">
+                Clear
+            </button>
+        </div>
+
+        <!-- Submit Button -->
+        <button class="btn-submit" 
+                @onclick="OnPinSetup"
+                disabled="@(ViewModel.PinEntry.Length != 4 || ViewModel.IsLoading)">
+            @if (ViewModel.IsLoading)
+            {
+                <span>Setting up...</span>
+            }
+            else
+            {
+                <span>Continue</span>
+            }
+        </button>
+
+        <!-- Instructions -->
+        <div class="pin-instructions">
+            <p>💡 Choose a 4-digit PIN you'll remember easily.</p>
+            <p>🔒 Your PIN will be encrypted and stored securely.</p>
+        </div>
+    </div>
+</div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        ViewModel?.Initialize();
+    }
+
+    private void AddZero()
+    {
+        ViewModel.AddDigit("0");
+    }
+
+    private async Task OnPinSetup()
+    {
+        if (ViewModel.PinEntry.Length != 4 || ViewModel.IsLoading)
+        {
+            return;
+        }
+
+        ViewModel.IsLoading = true;
+        ViewModel.ErrorMessage = string.Empty;
+
+        try
+        {
+            bool setupSuccess = await PinAuthService.SetupPinAsync(ViewModel.PinEntry);
+
+            if (setupSuccess)
+            {
+                ViewModel.ErrorMessage = string.Empty;
+                System.Diagnostics.Debug.WriteLine("[PinSetup] PIN setup successful, navigating to home");
+                // Mark as authenticated and navigate
+                if (Application.Current is App app)
+                {
+                    app.SetPinAuthenticated(true);
+                }
+                Navigation.NavigateTo("/");
+            }
+            else
+            {
+                ViewModel.ErrorMessage = "Invalid PIN. Please use a 4-digit number.";
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[PinSetup] Error: {ex.Message}");
+            ViewModel.ErrorMessage = "An error occurred. Please try again.";
+        }
+        finally
+        {
+            ViewModel.IsLoading = false;
+        }
+    }
+}
+

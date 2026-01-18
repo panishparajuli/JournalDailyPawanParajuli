@@ -1,0 +1,411 @@
+.pin-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 20px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+}
+
+.pin-card {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    padding: 40px 30px;
+    width: 100%;
+    max-width: 400px;
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Header */
+.pin-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.pin-header h1 {
+    font-size: 28px;
+    font-weight: 600;
+    color: #333;
+    margin: 0 0 8px 0;
+    letter-spacing: -0.5px;
+}
+
+.pin-header .subtitle {
+    font-size: 14px;
+    color: #888;
+    margin: 0;
+    line-height: 1.5;
+}
+
+/* PIN Display */
+.pin-display {
+    margin: 30px 0;
+    display: flex;
+    justify-content: center;
+}
+
+.pin-dots {
+    display: flex;
+    gap: 16px;
+}
+
+.pin-dot {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: 2px solid #e0e0e0;
+    background: #f5f5f5;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.pin-dot.filled {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-color: #667eea;
+    animation: fillDot 0.2s ease-out;
+}
+
+@keyframes fillDot {
+    0% {
+        transform: scale(0.8);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+.pin-dot.empty {
+    background: #f5f5f5;
+    border-color: #e0e0e0;
+}
+
+/* PIN Entry Display (for reference/debug) */
+.pin-entry-display {
+    text-align: center;
+    font-size: 14px;
+    color: #999;
+    margin-bottom: 10px;
+    font-family: monospace;
+    letter-spacing: 2px;
+    min-height: 20px;
+}
+
+/* Messages */
+.error-message {
+    background: #fee;
+    border: 1px solid #fcc;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 16px;
+    color: #c33;
+    font-size: 13px;
+    text-align: center;
+    animation: shake 0.3s ease-out;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+
+.lockout-message {
+    background: #f0f0f0;
+    border: 2px solid #e74c3c;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 16px;
+    color: #c0392b;
+    font-size: 14px;
+    text-align: center;
+    font-weight: 600;
+}
+
+.attempts-warning {
+    background: #fff3cd;
+    border: 1px solid #ffc107;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 16px;
+    color: #856404;
+    font-size: 13px;
+    text-align: center;
+}
+
+/* Numeric Keypad */
+.numeric-keypad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin: 30px 0;
+}
+
+.key-btn {
+    aspect-ratio: 1;
+    border: 2px solid #e0e0e0;
+    background: #f9f9f9;
+    border-radius: 12px;
+    font-size: 20px;
+    font-weight: 600;
+    color: #333;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-height: 60px;
+}
+
+.key-btn:hover:not(:disabled) {
+    background: #f0f0f0;
+    border-color: #667eea;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+}
+
+.key-btn:active:not(:disabled) {
+    transform: translateY(0);
+    background: #e8e8e8;
+}
+
+.key-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.key-btn.key-number {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+}
+
+/* Action Buttons */
+.pin-actions {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.btn-delete,
+.btn-clear {
+    flex: 1;
+    padding: 12px;
+    border: 1px solid #ddd;
+    background: white;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #666;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-delete:hover,
+.btn-clear:hover {
+    background: #f5f5f5;
+    border-color: #bbb;
+}
+
+.btn-delete:active,
+.btn-clear:active {
+    background: #eee;
+}
+
+/* Submit Button */
+.btn-submit {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.btn-submit:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.btn-submit:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.btn-submit:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Reset Button (debug/settings) */
+.btn-reset {
+    width: 100%;
+    padding: 10px;
+    background: white;
+    color: #e74c3c;
+    border: 1px solid #e74c3c;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-top: 10px;
+}
+
+.btn-reset:hover {
+    background: #ffe8e8;
+}
+
+/* Instructions/Info */
+.pin-instructions,
+.pin-info {
+    text-align: center;
+    font-size: 13px;
+    color: #999;
+    margin-top: 20px;
+}
+
+.pin-instructions p,
+.pin-info p {
+    margin: 6px 0;
+    line-height: 1.4;
+}
+
+/* Responsive Design */
+@media (max-width: 480px) {
+    .pin-card {
+        padding: 30px 20px;
+        border-radius: 12px;
+    }
+
+    .pin-header h1 {
+        font-size: 24px;
+    }
+
+    .pin-header .subtitle {
+        font-size: 12px;
+    }
+
+    .pin-dot {
+        width: 40px;
+        height: 40px;
+        border-width: 2px;
+    }
+
+    .key-btn {
+        min-height: 50px;
+        font-size: 18px;
+    }
+
+    .btn-submit {
+        padding: 12px;
+        font-size: 14px;
+    }
+
+    .pin-instructions,
+    .pin-info {
+        font-size: 11px;
+    }
+}
+
+@media (max-width: 320px) {
+    .pin-card {
+        padding: 20px 15px;
+    }
+
+    .pin-header h1 {
+        font-size: 20px;
+    }
+
+    .pin-dots {
+        gap: 12px;
+    }
+
+    .pin-dot {
+        width: 35px;
+        height: 35px;
+    }
+
+    .numeric-keypad {
+        gap: 8px;
+        margin: 20px 0;
+    }
+
+    .key-btn {
+        min-height: 45px;
+        font-size: 16px;
+    }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .pin-card {
+        background: #1e1e1e;
+    }
+
+    .pin-header h1 {
+        color: #fff;
+    }
+
+    .pin-header .subtitle {
+        color: #aaa;
+    }
+
+    .pin-dot {
+        border-color: #333;
+        background: #2a2a2a;
+    }
+
+    .pin-dot.filled {
+        border-color: #667eea;
+    }
+
+    .pin-entry-display {
+        color: #555;
+    }
+
+    .key-btn {
+        background: #2a2a2a;
+        border-color: #333;
+        color: #fff;
+    }
+
+    .key-btn:hover:not(:disabled) {
+        background: #333;
+        border-color: #667eea;
+    }
+
+    .key-btn:active:not(:disabled) {
+        background: #2a2a2a;
+    }
+
+    .btn-delete,
+    .btn-clear {
+        background: #2a2a2a;
+        border-color: #333;
+        color: #aaa;
+    }
+
+    .btn-delete:hover,
+    .btn-clear:hover {
+        background: #333;
+        border-color: #555;
+    }
+
+    .pin-instructions,
+    .pin-info {
+        color: #666;
+    }
+}

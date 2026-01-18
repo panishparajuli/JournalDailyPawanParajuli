@@ -1,86 +1,145 @@
 @page "/calendar"
+@using JournalDaily.ViewModels
 @using JournalDaily.Services
 @inject JournalService JournalService
-@inject NavigationManager Navigation
+@implements IAsyncDisposable
 
-<h3>Calendar</h3>
+<div class="calendar-container">
+    <div class="calendar-header">
+        <button class="nav-button" @onclick="() => ViewModel?.PreviousMonthCommand.Execute(null)">
+            <span class="arrow-icon">←</span>
+        </button>
+        
+        <div class="month-year-section">
+            <h2 class="month-year">
+                @CurrentMonth.ToString("MMMM yyyy")
+            </h2>
+            <button class="today-button" @onclick="() => ViewModel?.TodayCommand.Execute(null)">
+                Today
+            </button>
+        </div>
 
-<div class="mb-2">
-    <button class="btn btn-secondary me-2" @onclick="PrevMonth">Previous</button>
-    <button class="btn btn-secondary" @onclick="NextMonth">Next</button>
-    <span class="ms-3">@displayMonth.ToString("MMMM yyyy")</span>
-    <button class="btn btn-link ms-3" @onclick="Today">Today</button>
+        <button class="nav-button" @onclick="() => ViewModel?.NextMonthCommand.Execute(null)">
+            <span class="arrow-icon">→</span>
+        </button>
+    </div>
+
+    @if (ViewModel?.IsLoading ?? false)
+    {
+        <div class="loading-spinner">
+            <p>Loading calendar...</p>
+        </div>
+    }
+    else if (!string.IsNullOrEmpty(ViewModel?.ErrorMessage))
+    {
+        <div class="error-message">
+            <p>⚠️ @ViewModel.ErrorMessage</p>
+        </div>
+    }
+    else
+    {
+        <div class="calendar-grid-container">
+            <div class="weekday-header">
+                <div class="weekday">Sun</div>
+                <div class="weekday">Mon</div>
+                <div class="weekday">Tue</div>
+                <div class="weekday">Wed</div>
+                <div class="weekday">Thu</div>
+                <div class="weekday">Fri</div>
+                <div class="weekday">Sat</div>
+            </div>
+
+            <div class="calendar-grid">
+                @foreach (var day in ViewModel?.CalendarDays ?? new System.Collections.ObjectModel.ObservableCollection<CalendarDay>())
+                {
+                    var isSelected = ViewModel?.SelectedDate?.Date == day.Date.Date;
+                    var classes = $"calendar-day {(day.IsCurrentMonth ? "" : "other-month")} {(day.HasEntry ? "has-entry" : "")} {(isSelected ? "selected" : "")} {(day.Date.Date == DateTime.Today ? "today" : "")}";
+
+                    <div class="@classes" @onclick="() => SelectDate(day.Date)">
+                        <div class="day-number">@day.Date.Day</div>
+                        @if (day.HasEntry)
+                        {
+                            <div class="entry-indicator">📝</div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+
+        @if (ViewModel?.SelectedEntry != null)
+        {
+            <div class="selected-entry-panel">
+                <div class="entry-header">
+                    <h3>@(string.IsNullOrEmpty(ViewModel.SelectedEntry.Title) ? "Untitled Entry" : ViewModel.SelectedEntry.Title)</h3>
+                    <span class="entry-date">@ViewModel.SelectedEntry.EntryDate.ToString("dddd, MMMM d, yyyy")</span>
+                </div>
+
+                @if (ViewModel.SelectedEntry.EntryMoods.Any())
+                {
+                    <div class="moods-section">
+                        <strong>Moods:</strong>
+                        <div class="moods-list">
+                            @foreach (var mood in ViewModel.SelectedEntry.EntryMoods)
+                            {
+                                <span class="mood-badge @(mood.IsPrimary ? "primary" : "")">
+                                    @mood.Mood?.Name
+                                </span>
+                            }
+                        </div>
+                    </div>
+                }
+
+                @if (ViewModel.SelectedEntry.EntryTags.Any())
+                {
+                    <div class="tags-section">
+                        <strong>Tags:</strong>
+                        <div class="tags-list">
+                            @foreach (var tag in ViewModel.SelectedEntry.EntryTags)
+                            {
+                                <span class="tag-badge">#@tag.Tag?.Name</span>
+                            }
+                        </div>
+                    </div>
+                }
+
+                <div class="content-section">
+                    <p>@ViewModel.SelectedEntry.Content</p>
+                </div>
+
+                <div class="entry-footer">
+                    <small>Updated: @ViewModel.SelectedEntry.UpdatedAt.ToString("g")</small>
+                </div>
+            </div>
+        }
+        else if (ViewModel?.SelectedDate.HasValue ?? false)
+        {
+            <div class="selected-entry-panel empty">
+                <p>No entry for @ViewModel.SelectedDate.Value.ToString("dddd, MMMM d, yyyy")</p>
+            </div>
+        }
+    }
 </div>
 
-<table class="table table-bordered">
-    <thead>
-        <tr>
-            <th>Sun</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach(var week in calendar)
-        {
-            <tr>
-                @foreach(var day in week)
-                {
-                    <td class="@(day.HasEntry? "table-success" : string.Empty)">
-                        <div>@day.Date.Day</div>
-                        <div>
-                            <button class="btn btn-sm btn-link" @onclick="() => Open(day.Date)">Open</button>
-                        </div>
-                    </td>
-                }
-            </tr>
-        }
-    </tbody>
-</table>
-
 @code {
-    private DateTime displayMonth = DateTime.Today;
-    private List<List<CalendarDay>> calendar = new();
+    private CalendarViewModel? ViewModel { get; set; }
+
+    private DateTime CurrentMonth => ViewModel?.CurrentMonth ?? DateTime.Today;
 
     protected override async Task OnInitializedAsync()
     {
-        BuildCalendar();
+        ViewModel = new CalendarViewModel(JournalService);
+        await ViewModel.InitializeAsync();
     }
 
-    private void BuildCalendar()
+    private void SelectDate(DateTime date)
     {
-        calendar.Clear();
-        var firstOfMonth = new DateTime(displayMonth.Year, displayMonth.Month, 1);
-        var start = firstOfMonth.AddDays(-(int)firstOfMonth.DayOfWeek);
-        for (int w = 0; w < 6; w++)
-        {
-            var week = new List<CalendarDay>();
-            for (int d = 0; d < 7; d++)
-            {
-                var date = start.AddDays(w * 7 + d);
-                week.Add(new CalendarDay { Date = date, HasEntry = false });
-            }
-            calendar.Add(week);
-        }
-        _ = MarkEntries();
-    }
-
-    private async Task MarkEntries()
-    {
-        // naive: check each day for an entry
-        foreach(var week in calendar)
-        {
-            foreach(var day in week)
-            {
-                var e = await JournalService.GetEntryByDateAsync(day.Date);
-                day.HasEntry = e != null;
-            }
-        }
+        ViewModel?.SelectDateCommand.Execute(date);
         StateHasChanged();
     }
 
-    private void PrevMonth() { displayMonth = displayMonth.AddMonths(-1); BuildCalendar(); }
-    private void NextMonth() { displayMonth = displayMonth.AddMonths(1); BuildCalendar(); }
-    private void Today() { displayMonth = DateTime.Today; BuildCalendar(); }
-    private void Open(DateTime date) => Navigation.NavigateTo($"journal?date={date:yyyy-MM-dd}");
-
-    private class CalendarDay { public DateTime Date { get; set; } public bool HasEntry { get; set; } }
+    async ValueTask IAsyncDisposable.DisposeAsync()
+    {
+        // Cleanup if needed
+        await ValueTask.CompletedTask;
+    }
 }

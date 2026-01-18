@@ -1,6 +1,64 @@
-﻿<Router AppAssembly="@typeof(MauiProgram).Assembly">
-    <Found Context="routeData">
-        <RouteView RouteData="@routeData" DefaultLayout="@typeof(Layout.MainLayout)" />
-        <FocusOnNavigate RouteData="@routeData" Selector="h1" />
-    </Found>
-</Router>
+﻿@using JournalDaily.Services
+@using Microsoft.AspNetCore.Components.Routing
+@using Microsoft.AspNetCore.Components
+@implements IAsyncDisposable
+@inject PinAuthService PinAuthService
+@inject NavigationManager Navigation
+
+@if (RequirePinAuth && !IsPinPage)
+{
+    @* Redirect to PIN setup if authentication is required *@
+}
+else
+{
+    <Router AppAssembly="@typeof(MauiProgram).Assembly">
+        <Found Context="routeData">
+            <RouteView RouteData="@routeData" DefaultLayout="@typeof(Layout.MainLayout)" />
+            <FocusOnNavigate RouteData="@routeData" Selector="h1" />
+        </Found>
+    </Router>
+}
+
+@code {
+    private bool RequirePinAuth = false;
+    private bool IsPinPage = false;
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        CheckPinRequirement();
+        Navigation.LocationChanged += OnLocationChanged;
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        base.OnAfterRender(firstRender);
+        if (RequirePinAuth && !IsPinPage)
+        {
+            Navigation.NavigateTo("/pin-setup", replace: true);
+        }
+    }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        CheckPinRequirement();
+    }
+
+    private void CheckPinRequirement()
+    {
+        // Check if this is a PIN page
+        var currentPath = new Uri(Navigation.Uri).AbsolutePath;
+        IsPinPage = currentPath.Contains("pin-auth") || currentPath.Contains("pin-setup");
+
+        // Check if PIN is required
+        RequirePinAuth = PinAuthService.IsPinSetupComplete() && !IsPinPage;
+
+        System.Diagnostics.Debug.WriteLine($"[Routes] Path: {currentPath}, RequirePinAuth: {RequirePinAuth}, IsPinPage: {IsPinPage}");
+    }
+
+    async ValueTask IAsyncDisposable.DisposeAsync()
+    {
+        Navigation.LocationChanged -= OnLocationChanged;
+        await ValueTask.CompletedTask;
+    }
+}

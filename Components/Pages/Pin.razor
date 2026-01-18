@@ -1,0 +1,19 @@
+@page "/pin"
+@using JournalDaily.Services
+@inject PinAuthService PinAuthService
+@inject NavigationManager Navigation
+
+<div class="pin-container">
+    <div class="pin-content">
+        <h1>PIN Authentication</h1>
+        <p>Please use the PIN authentication pages.</p>
+        <button class="btn btn-primary" @onclick="NavigateToPinSetup">Go to PIN Setup</button>
+    </div>
+</div>
+
+@code {
+    private void NavigateToPinSetup()
+    {
+        Navigation.NavigateTo("/pin-setup");
+    }
+}

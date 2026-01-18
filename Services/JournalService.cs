@@ -28,9 +28,20 @@ namespace JournalDaily.Services
                 .FirstOrDefaultAsync(e => e.EntryDate == d);
         }
 
+        public async Task<List<JournalEntry>> GetAllEntriesAsync()
+        {
+            return await _db.JournalEntries
+                .Include(e => e.EntryTags).ThenInclude(et => et.Tag)
+                .Include(e => e.EntryMoods).ThenInclude(em => em.Mood)
+                .OrderByDescending(e => e.EntryDate)
+                .ToListAsync();
+        }
+
         public async Task<List<JournalEntry>> GetPaginatedEntriesAsync(int pageIndex, int pageSize)
         {
             return await _db.JournalEntries
+                .Include(e => e.EntryTags).ThenInclude(et => et.Tag)
+                .Include(e => e.EntryMoods).ThenInclude(em => em.Mood)
                 .OrderByDescending(e => e.EntryDate)
                 .Skip(pageIndex * pageSize)
                 .Take(pageSize)
@@ -118,6 +129,19 @@ namespace JournalDaily.Services
             _db.JournalEntries.Remove(existing);
             await _db.SaveChangesAsync();
             return true;
+        }
+
+        public async Task<List<JournalEntry>> GetEntriesByMonthAsync(int year, int month)
+        {
+            var from = new DateTime(year, month, 1).Date;
+            var to = from.AddMonths(1).AddDays(-1).Date;
+
+            return await _db.JournalEntries
+                .Include(e => e.EntryTags).ThenInclude(et => et.Tag)
+                .Include(e => e.EntryMoods).ThenInclude(em => em.Mood)
+                .Where(e => e.EntryDate >= from && e.EntryDate <= to)
+                .OrderByDescending(e => e.EntryDate)
+                .ToListAsync();
         }
 
         public async Task<List<JournalEntry>> SearchEntriesAsync(string? query, DateTime? from, DateTime? to, IEnumerable<string>? moods, IEnumerable<string>? tags)

@@ -1,0 +1,176 @@
+@page "/pin-auth"
+@using JournalDaily.ViewModels
+@using JournalDaily.Services
+@using JournalDaily.Services
+@inject PinViewModel ViewModel
+@inject NavigationManager Navigation
+@inject PinAuthService PinAuthService
+
+<div class="pin-container">
+    <div class="pin-card">
+        <!-- Header -->
+        <div class="pin-header">
+            <h1>🔐 Enter PIN</h1>
+            <p class="subtitle">Enter your 4-digit PIN to access your journal</p>
+        </div>
+
+        <!-- PIN Display with Dots -->
+        <div class="pin-display">
+            <div class="pin-dots">
+                @for (int i = 0; i < 4; i++)
+                {
+                    <div class="pin-dot @(i < ViewModel.PinEntry.Length ? "filled" : "empty")"></div>
+                }
+            </div>
+        </div>
+
+        <!-- Error/Status Message -->
+        @if (!string.IsNullOrEmpty(ViewModel.ErrorMessage))
+        {
+            <div class="error-message">
+                <span>⚠️ @ViewModel.ErrorMessage</span>
+            </div>
+        }
+
+        <!-- Locked Out State -->
+        @if (ViewModel.IsLockedOut)
+        {
+            <div class="lockout-message">
+                <span>🔒 Account locked. Please try again in 15 minutes.</span>
+            </div>
+        }
+
+        <!-- Remaining Attempts -->
+        @if (ViewModel.RemainingAttempts > 0 && ViewModel.RemainingAttempts <= 3)
+        {
+            <div class="attempts-warning">
+                <span>⏱️ @ViewModel.RemainingAttempts attempt@(ViewModel.RemainingAttempts == 1 ? "" : "s") remaining</span>
+            </div>
+        }
+
+        <!-- Numeric Keypad -->
+        @if (!ViewModel.IsLockedOut)
+        {
+            <div class="numeric-keypad">
+                @for (int i = 1; i <= 9; i++)
+                {
+                    int digit = i;
+                    <button class="key-btn key-number" 
+                            @onclick="() => ViewModel.AddDigit(digit.ToString())"
+                            disabled="@(ViewModel.IsLoading)">
+                        @digit
+                    </button>
+                }
+                <!-- 0 button spans full width -->
+                <button class="key-btn key-number" 
+                        style="grid-column:1/-1"
+                        @onclick="AddZero"
+                        disabled="@(ViewModel.IsLoading)">
+                    0
+                </button>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="pin-actions">
+                <button class="btn-delete" @onclick="() => ViewModel.DeletePinDigitCommand.Execute(null)">
+                    ⌫ Delete
+                </button>
+                <button class="btn-clear" @onclick="() => ViewModel.ClearPinCommand.Execute(null)">
+                    Clear
+                </button>
+            </div>
+        }
+
+        <!-- Submit Button -->
+        <button class="btn-submit" 
+                @onclick="OnPinSubmit"
+                disabled="@(ViewModel.PinEntry.Length != 4 || ViewModel.IsLoading || ViewModel.IsLockedOut)">
+            @if (ViewModel.IsLoading)
+            {
+                <span>Verifying...</span>
+            }
+            else
+            {
+                <span>Unlock</span>
+            }
+        </button>
+
+        <!-- Security Info -->
+        <div class="pin-info">
+            <p>🔒 Your journal is password-protected.</p>
+            <p>👤 Only you can access your entries.</p>
+        </div>
+
+        <!-- Debug/Reset Button (in settings/options menu in production) -->
+        <button class="btn-reset" @onclick="() => ViewModel.ResetCommand.Execute(null)">
+            Reset PIN
+        </button>
+    </div>
+</div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        ViewModel?.Initialize();
+    }
+
+    private void AddZero()
+    {
+        ViewModel.AddDigit("0");
+    }
+
+    private async Task OnPinSubmit()
+    {
+        if (ViewModel.PinEntry.Length != 4 || ViewModel.IsLoading || ViewModel.IsLockedOut)
+        {
+            return;
+        }
+
+        ViewModel.IsLoading = true;
+        ViewModel.ErrorMessage = string.Empty;
+
+        try
+        {
+            bool isValid = await PinAuthService.VerifyPinAsync(ViewModel.PinEntry);
+
+            if (isValid)
+            {
+                ViewModel.ErrorMessage = string.Empty;
+                System.Diagnostics.Debug.WriteLine("[PinAuth] PIN verification successful, navigating to home");
+                // Mark as authenticated and navigate
+                if (Application.Current is App app)
+                {
+                    app.SetPinAuthenticated(true);
+                }
+                Navigation.NavigateTo("/");
+            }
+            else
+            {
+                ViewModel.RemainingAttempts = PinAuthService.GetRemainingAttempts();
+                ViewModel.IsLockedOut = PinAuthService.IsLockedOut();
+
+                if (ViewModel.IsLockedOut)
+                {
+                    ViewModel.ErrorMessage = $"Too many attempts. Locked out for 15 minutes.";
+                }
+                else
+                {
+                    ViewModel.ErrorMessage = $"Incorrect PIN. {ViewModel.RemainingAttempts} attempts remaining.";
+                }
+
+                ViewModel.PinEntry = string.Empty;
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[PinAuth] Error: {ex.Message}");
+            ViewModel.ErrorMessage = "An error occurred. Please try again.";
+        }
+        finally
+        {
+            ViewModel.IsLoading = false;
+        }
+    }
+}
+

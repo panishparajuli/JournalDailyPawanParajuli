@@ -1,0 +1,357 @@
+.calendar-container {
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    gap: 20px;
+}
+
+.nav-button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 18px;
+    min-width: 50px;
+    transition: background-color 0.3s ease;
+}
+
+.nav-button:hover {
+    background-color: #0056b3;
+}
+
+.arrow-icon {
+    font-weight: bold;
+}
+
+.month-year-section {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex: 1;
+    justify-content: center;
+}
+
+.month-year {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 600;
+    color: #333;
+}
+
+.today-button {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s ease;
+}
+
+.today-button:hover {
+    background-color: #218838;
+}
+
+.loading-spinner {
+    text-align: center;
+    padding: 40px;
+    color: #666;
+}
+
+.error-message {
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    color: #721c24;
+    padding: 15px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+}
+
+.calendar-grid-container {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    margin-bottom: 30px;
+}
+
+.weekday-header {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.weekday {
+    text-align: center;
+    font-weight: 700;
+    color: #495057;
+    padding: 10px 0;
+    font-size: 14px;
+}
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+}
+
+.calendar-day {
+    aspect-ratio: 1 / 1;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 8px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    background-color: #f8f9fa;
+    transition: all 0.3s ease;
+    position: relative;
+    min-height: 80px;
+}
+
+.calendar-day:hover {
+    background-color: #e7f1ff;
+    border-color: #007bff;
+    box-shadow: 0 2px 6px rgba(0, 123, 255, 0.2);
+    transform: translateY(-2px);
+}
+
+.calendar-day.other-month {
+    background-color: #f0f0f0;
+    color: #999;
+}
+
+.calendar-day.other-month .day-number {
+    color: #999;
+}
+
+.calendar-day.has-entry {
+    background: linear-gradient(135deg, #fff3cd 0%, #fffacd 100%);
+    border-color: #ffc107;
+    font-weight: 600;
+}
+
+.calendar-day.has-entry:hover {
+    background: linear-gradient(135deg, #ffe680 0%, #ffd966 100%);
+    border-color: #ff9800;
+}
+
+.calendar-day.today {
+    border: 2px solid #28a745;
+    background-color: #d4edda;
+}
+
+.calendar-day.today .day-number {
+    color: #155724;
+    font-weight: 700;
+}
+
+.calendar-day.selected {
+    background-color: #007bff;
+    color: white;
+    border-color: #0056b3;
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.4);
+}
+
+.calendar-day.selected .day-number {
+    color: white;
+    font-weight: 700;
+}
+
+.calendar-day.selected .entry-indicator {
+    color: white;
+}
+
+.day-number {
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 4px;
+}
+
+.entry-indicator {
+    font-size: 18px;
+    margin-top: auto;
+}
+
+/* Selected Entry Panel */
+.selected-entry-panel {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    padding: 25px;
+    border-left: 4px solid #007bff;
+}
+
+.selected-entry-panel.empty {
+    text-align: center;
+    color: #999;
+    padding: 40px;
+}
+
+.entry-header {
+    margin-bottom: 20px;
+    border-bottom: 1px solid #dee2e6;
+    padding-bottom: 15px;
+}
+
+.entry-header h3 {
+    margin: 0 0 8px 0;
+    color: #333;
+    font-size: 22px;
+}
+
+.entry-date {
+    color: #6c757d;
+    font-size: 14px;
+}
+
+.moods-section,
+.tags-section {
+    margin-bottom: 15px;
+}
+
+.moods-section strong,
+.tags-section strong {
+    display: block;
+    margin-bottom: 8px;
+    color: #495057;
+    font-size: 14px;
+}
+
+.moods-list,
+.tags-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.mood-badge {
+    background-color: #e2e3e5;
+    color: #495057;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.mood-badge.primary {
+    background-color: #ffc107;
+    color: #333;
+    font-weight: 600;
+}
+
+.tag-badge {
+    background-color: #d1ecf1;
+    color: #0c5460;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.content-section {
+    margin: 20px 0;
+    line-height: 1.6;
+    color: #333;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.content-section p {
+    margin: 0;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+.entry-footer {
+    text-align: right;
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #dee2e6;
+    color: #6c757d;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .calendar-container {
+        padding: 10px;
+    }
+
+    .calendar-header {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .month-year-section {
+        width: 100%;
+    }
+
+    .month-year {
+        font-size: 22px;
+    }
+
+    .calendar-grid-container {
+        padding: 10px;
+    }
+
+    .calendar-day {
+        min-height: 60px;
+        padding: 6px;
+        font-size: 12px;
+    }
+
+    .day-number {
+        font-size: 14px;
+    }
+
+    .entry-indicator {
+        font-size: 14px;
+    }
+
+    .selected-entry-panel {
+        padding: 15px;
+    }
+
+    .entry-header h3 {
+        font-size: 18px;
+    }
+}
+
+@media (max-width: 480px) {
+    .calendar-day {
+        min-height: 50px;
+        padding: 4px;
+    }
+
+    .day-number {
+        font-size: 12px;
+    }
+
+    .entry-indicator {
+        font-size: 12px;
+    }
+
+    .month-year {
+        font-size: 18px;
+    }
+
+    .nav-button,
+    .today-button {
+        padding: 6px 12px;
+        font-size: 12px;
+    }
+}

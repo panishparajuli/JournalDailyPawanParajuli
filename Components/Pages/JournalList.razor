@@ -1,113 +1,130 @@
 @page "/entries"
-@using JournalDaily.Models
+@using JournalDaily.ViewModels
 @using JournalDaily.Services
 @inject JournalService JournalService
-@inject NavigationManager Navigation
+@implements IAsyncDisposable
 
-<h3>Entries</h3>
+<div class="journal-list-container">
+    <div class="journal-header">
+        <h2>Journal Entries</h2>
+        <button class="refresh-button" @onclick="() => ViewModel?.RefreshCommand.Execute(null)">
+            🔄 Refresh
+        </button>
+    </div>
 
-<div class="mb-2">
-    <input class="form-control" placeholder="Search title or content" @bind="query" />
-</div>
-
-<div class="mb-2">
-    <label>Date range</label>
-    <input type="date" class="me-2" value="@fromString" @onchange="e => fromString = e.Value?.ToString() ?? string.Empty" />
-    <input type="date" value="@toString" @onchange="e => toString = e.Value?.ToString() ?? string.Empty" />
-</div>
-
-<div class="mb-2">
-    <label>Tags (comma-separated)</label>
-    <input class="form-control" @bind="tagsCsv" />
-</div>
-
-<div class="mb-2">
-    <button class="btn btn-primary me-2" @onclick="ApplyFilters">Apply</button>
-    <button class="btn btn-secondary" @onclick="ClearFilters">Clear</button>
-</div>
-
-<div>
-    @if (entries is null)
+    @if (ViewModel?.IsLoading ?? false)
     {
-        <p>Loading...</p>
+        <div class="loading-state">
+            <div class="spinner"></div>
+            <p>Loading entries...</p>
+        </div>
     }
-    else if (!entries.Any())
+    else if (!string.IsNullOrEmpty(ViewModel?.ErrorMessage))
     {
-        <p>No entries</p>
+        <div class="error-state">
+            <p>⚠️ @ViewModel.ErrorMessage</p>
+            <button class="btn-retry" @onclick="() => ViewModel?.RefreshCommand.Execute(null)">Retry</button>
+        </div>
+    }
+    else if (!ViewModel?.CurrentPageEntries.Any() ?? false)
+    {
+        <div class="empty-state">
+            <div class="empty-icon">📓</div>
+            <h3>No Entries Yet</h3>
+            <p>Start journaling to see your entries here.</p>
+        </div>
     }
     else
     {
-        <ul class="list-group">
-            @foreach(var e in paged)
+        <div class="entries-list">
+            @foreach (var entry in ViewModel?.CurrentPageEntries ?? new System.Collections.ObjectModel.ObservableCollection<JournalEntry>())
             {
-                <li class="list-group-item">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <strong>@(e.Title ?? "(no title)")</strong>
-                            <div class="text-muted">@e.EntryDate.ToString("yyyy-MM-dd")</div>
-                            <div class="mt-1">@((MarkupString)TruncateHtml(Markdig.Markdown.ToHtml(e.Content ?? string.Empty), 200))</div>
-                        </div>
-                        <div>
-                            <button class="btn btn-sm btn-link" @onclick="() => Edit(e.EntryDate)">Edit</button>
-                        </div>
+                <div class="entry-card">
+                    <div class="entry-card-header">
+                        <h3 class="entry-title">@(string.IsNullOrEmpty(entry.Title) ? "Untitled Entry" : entry.Title)</h3>
+                        <span class="entry-date">@entry.EntryDate.ToString("dddd, MMMM d, yyyy")</span>
                     </div>
-                </li>
-            }
-        </ul>
 
-        <div class="mt-2">
-            <button class="btn btn-secondary me-2" @onclick="PrevPage" disabled="@(pageIndex==0)">Previous</button>
-            <button class="btn btn-secondary" @onclick="NextPage" disabled="@( (pageIndex+1)*pageSize >= entries.Count )">Next</button>
+                    <div class="entry-meta">
+                        @if (entry.EntryMoods.Any())
+                        {
+                            <div class="mood-badges">
+                                @foreach (var mood in entry.EntryMoods.OrderByDescending(m => m.IsPrimary))
+                                {
+                                    <span class="mood-badge @(mood.IsPrimary ? "primary" : "")">
+                                        @mood.Mood?.Name
+                                    </span>
+                                }
+                            </div>
+                        }
+
+                        @if (entry.EntryTags.Any())
+                        {
+                            <div class="tag-badges">
+                                @foreach (var tag in entry.EntryTags.Take(3))
+                                {
+                                    <span class="tag-badge">#@tag.Tag?.Name</span>
+                                }
+                                @if (entry.EntryTags.Count > 3)
+                                {
+                                    <span class="tag-badge">+@(entry.EntryTags.Count - 3) more</span>
+                                }
+                            </div>
+                        }
+                    </div>
+
+                    <div class="entry-content">
+                        @{
+                            var content = entry.Content ?? string.Empty;
+                            var preview = content.Length > 200 ? content.Substring(0, 200) + "..." : content;
+                        }
+                        <p>@preview</p>
+                    </div>
+
+                    <div class="entry-footer">
+                        <small class="updated-time">Updated: @entry.UpdatedAt.ToString("g")</small>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="pagination-container">
+            <div class="pagination-info">
+                <p>@ViewModel?.PageInfo</p>
+            </div>
+
+            <div class="pagination-controls">
+                <button class="nav-button" 
+                        @onclick="() => ViewModel?.PreviousPageCommand.Execute(null)" 
+                        disabled="@(!(ViewModel?.HasPreviousPage ?? false))">
+                    ← Previous
+                </button>
+
+                <div class="page-indicator">
+                    Page @((ViewModel?.CurrentPageIndex ?? 0) + 1) of @(ViewModel?.TotalPages ?? 0)
+                </div>
+
+                <button class="nav-button" 
+                        @onclick="() => ViewModel?.NextPageCommand.Execute(null)" 
+                        disabled="@(!(ViewModel?.HasNextPage ?? false))">
+                    Next →
+                </button>
+            </div>
         </div>
     }
 </div>
-}
 
 @code {
-    private string? query;
-    private DateTime? from;
-    private DateTime? to;
-    private string? fromString { get => from?.ToString("yyyy-MM-dd") ?? string.Empty; set { if (DateTime.TryParse(value, out var dt)) from = dt.Date; else from = null; } }
-    private string? toString { get => to?.ToString("yyyy-MM-dd") ?? string.Empty; set { if (DateTime.TryParse(value, out var dt)) to = dt.Date; else to = null; } }
-    private string? tagsCsv;
-
-    private List<JournalEntry>? entries;
-    private int pageIndex = 0;
-    private int pageSize = 10;
-    private IEnumerable<JournalEntry> paged => entries?.Skip(pageIndex*pageSize).Take(pageSize) ?? Enumerable.Empty<JournalEntry>();
+    private JournalListViewModel? ViewModel { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadAll();
+        ViewModel = new JournalListViewModel(JournalService);
+        await ViewModel.InitializeAsync();
     }
 
-    private async Task LoadAll()
+    async ValueTask IAsyncDisposable.DisposeAsync()
     {
-        entries = await JournalService.SearchEntriesAsync(query, from, to, null, null);
-    }
-
-    private async Task ApplyFilters()
-    {
-        var tagList = (tagsCsv ?? string.Empty).Split(',', StringSplitOptions.RemoveEmptyEntries).Select(t => t.Trim()).Where(t => !string.IsNullOrEmpty(t));
-        entries = await JournalService.SearchEntriesAsync(query, from, to, null, tagList);
-        pageIndex = 0;
-    }
-
-    private async Task ClearFilters()
-    {
-        query = string.Empty; from = null; to = null; tagsCsv = string.Empty; pageIndex = 0;
-        await LoadAll();
-    }
-
-    private void Edit(DateTime date) => Navigation.NavigateTo($"journal?date={date:yyyy-MM-dd}");
-
-    private void PrevPage() { if (pageIndex>0) pageIndex--; }
-    private void NextPage() { if (entries!=null && (pageIndex+1)*pageSize < entries.Count) pageIndex++; }
-
-    private static string TruncateHtml(string html, int max)
-    {
-        if (string.IsNullOrEmpty(html)) return string.Empty;
-        if (html.Length <= max) return html;
-        return html.Substring(0, max) + "...";
+        await ValueTask.CompletedTask;
     }
 }

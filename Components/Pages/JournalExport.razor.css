@@ -1,0 +1,590 @@
+.export-container {
+    padding: 20px;
+    background: #f5f5f5;
+    min-height: 100vh;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+}
+
+.export-card {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+/* Header */
+.export-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.export-header h1 {
+    font-size: 28px;
+    font-weight: 600;
+    color: #333;
+    margin: 0 0 8px 0;
+}
+
+.export-header .subtitle {
+    font-size: 14px;
+    color: #777;
+    margin: 0;
+}
+
+/* Date Range Section */
+.date-range-section {
+    margin-bottom: 24px;
+}
+
+.date-inputs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.date-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.date-group label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #555;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.date-input {
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    background: white;
+    color: #333;
+    transition: border-color 0.2s ease;
+}
+
+.date-input:hover:not(:disabled) {
+    border-color: #bbb;
+}
+
+.date-input:focus:not(:disabled) {
+    outline: none;
+    border-color: #4CAF50;
+    box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+}
+
+.date-input:disabled {
+    background: #f9f9f9;
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.date-info {
+    text-align: center;
+    font-size: 13px;
+    color: #666;
+    font-weight: 500;
+}
+
+/* Presets Section */
+.presets-section {
+    margin-bottom: 24px;
+    padding: 16px;
+    background: #f9f9f9;
+    border-radius: 8px;
+}
+
+.presets-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #555;
+    margin: 0 0 10px 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.presets-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+}
+
+.preset-btn {
+    padding: 8px 12px;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #555;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.preset-btn:hover:not(:disabled) {
+    background: #4CAF50;
+    border-color: #4CAF50;
+    color: white;
+    transform: translateY(-1px);
+}
+
+.preset-btn:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.preset-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Status Message */
+.status-message {
+    padding: 12px 16px;
+    border-radius: 6px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    animation: slideDown 0.3s ease-out;
+}
+
+.status-message.success {
+    background: #e8f5e9;
+    border: 1px solid #4CAF50;
+    color: #2e7d32;
+}
+
+.status-message.info {
+    background: #e3f2fd;
+    border: 1px solid #2196F3;
+    color: #1565c0;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.btn-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    color: inherit;
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+    padding: 0;
+    margin-left: 8px;
+}
+
+.btn-close:hover {
+    opacity: 1;
+}
+
+/* Export Result Card */
+.export-result-card {
+    background: #e8f5e9;
+    border: 1px solid #4CAF50;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+.export-result-card h3 {
+    margin: 0 0 12px 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #2e7d32;
+}
+
+.result-details {
+    margin-bottom: 12px;
+}
+
+.result-details p {
+    margin: 6px 0;
+    font-size: 12px;
+    color: #1b5e20;
+}
+
+.result-details strong {
+    font-weight: 600;
+}
+
+.result-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-open {
+    flex: 1;
+    padding: 10px 12px;
+    background: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-open:hover:not(:disabled) {
+    background: #45a049;
+    transform: translateY(-1px);
+}
+
+.btn-open:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.btn-open:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Export Button */
+.btn-export {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-bottom: 24px;
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.2);
+}
+
+.btn-export:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(76, 175, 80, 0.3);
+}
+
+.btn-export:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.btn-export:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Exported Files Section */
+.exported-files-section {
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 1px solid #eee;
+}
+
+.exported-files-section h2 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+    margin: 0 0 8px 0;
+}
+
+.files-count {
+    font-size: 12px;
+    color: #999;
+    margin: 0 0 16px 0;
+}
+
+.files-list {
+    margin-bottom: 12px;
+}
+
+.file-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    background: #f9f9f9;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    border: 1px solid #eee;
+    transition: all 0.2s ease;
+}
+
+.file-item:hover {
+    background: #f0f0f0;
+    border-color: #ddd;
+}
+
+.file-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.file-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: #333;
+    margin: 0;
+    word-break: break-word;
+}
+
+.file-details {
+    font-size: 11px;
+    color: #999;
+    margin: 4px 0 0 0;
+}
+
+.file-actions {
+    display: flex;
+    gap: 6px;
+    margin-left: 8px;
+}
+
+.btn-file-action {
+    padding: 8px;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 36px;
+    text-align: center;
+}
+
+.btn-file-action:hover:not(:disabled) {
+    border-color: #bbb;
+    background: #f5f5f5;
+}
+
+.btn-file-action.btn-delete:hover:not(:disabled) {
+    background: #ffebee;
+    border-color: #f44336;
+}
+
+.btn-file-action:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-refresh {
+    width: 100%;
+    padding: 10px;
+    background: #f0f0f0;
+    color: #333;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-refresh:hover {
+    background: #e0e0e0;
+    border-color: #bbb;
+}
+
+.btn-refresh:active {
+    background: #f0f0f0;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 32px 16px;
+    color: #999;
+}
+
+.empty-state p {
+    margin: 8px 0;
+    font-size: 14px;
+}
+
+.empty-hint {
+    font-size: 12px;
+    color: #bbb;
+}
+
+/* Info Section */
+.export-info {
+    margin-top: 24px;
+    padding: 16px;
+    background: #f5f5f5;
+    border-radius: 8px;
+    font-size: 12px;
+    color: #666;
+}
+
+.export-info p {
+    margin: 6px 0;
+    line-height: 1.5;
+}
+
+.export-info strong {
+    font-weight: 600;
+    color: #333;
+}
+
+/* Responsive Design */
+@media (max-width: 480px) {
+    .export-card {
+        padding: 16px;
+        border-radius: 8px;
+    }
+
+    .export-header h1 {
+        font-size: 22px;
+    }
+
+    .date-inputs {
+        grid-template-columns: 1fr;
+    }
+
+    .presets-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .file-actions {
+        flex-direction: column;
+    }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+    .export-container {
+        background: #121212;
+    }
+
+    .export-card {
+        background: #1e1e1e;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    }
+
+    .export-header h1 {
+        color: #fff;
+    }
+
+    .export-header .subtitle {
+        color: #aaa;
+    }
+
+    .date-input {
+        background: #2a2a2a;
+        color: #fff;
+        border-color: #333;
+    }
+
+    .date-input:focus:not(:disabled) {
+        border-color: #4CAF50;
+    }
+
+    .presets-section {
+        background: #2a2a2a;
+    }
+
+    .presets-label {
+        color: #aaa;
+    }
+
+    .preset-btn {
+        background: #2a2a2a;
+        border-color: #333;
+        color: #aaa;
+    }
+
+    .preset-btn:hover:not(:disabled) {
+        background: #4CAF50;
+        border-color: #4CAF50;
+        color: white;
+    }
+
+    .date-group label {
+        color: #aaa;
+    }
+
+    .date-info {
+        color: #aaa;
+    }
+
+    .file-item {
+        background: #2a2a2a;
+        border-color: #333;
+    }
+
+    .file-item:hover {
+        background: #333;
+    }
+
+    .file-name {
+        color: #fff;
+    }
+
+    .file-details {
+        color: #777;
+    }
+
+    .btn-file-action {
+        background: #2a2a2a;
+        border-color: #333;
+    }
+
+    .btn-file-action:hover:not(:disabled) {
+        background: #333;
+    }
+
+    .btn-refresh {
+        background: #2a2a2a;
+        border-color: #333;
+        color: #aaa;
+    }
+
+    .btn-refresh:hover {
+        background: #333;
+    }
+
+    .export-info {
+        background: #2a2a2a;
+        color: #aaa;
+    }
+
+    .export-info strong {
+        color: #fff;
+    }
+
+    .empty-state {
+        color: #777;
+    }
+
+    .status-message.info {
+        background: #1a3a52;
+        border-color: #2196F3;
+        color: #64b5f6;
+    }
+
+    .export-result-card {
+        background: #1b5e20;
+        border-color: #4CAF50;
+    }
+
+    .export-result-card h3 {
+        color: #81c784;
+    }
+
+    .result-details p {
+        color: #a5d6a7;
+    }
+}

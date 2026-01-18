@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using JournalDaily.Data;
 using JournalDaily.Services;
+using JournalDaily.ViewModels;
 using System.IO;
 using Microsoft.Maui.Storage;
 
@@ -9,6 +10,8 @@ namespace JournalDaily
 {
     public static class MauiProgram
     {
+        public static MauiApp Current { get; private set; }
+
         public static MauiApp CreateMauiApp()
         {
             var builder = MauiApp.CreateBuilder();
@@ -27,6 +30,14 @@ namespace JournalDaily
                 options.UseSqlite($"Data Source={dbPath}"));
 
             builder.Services.AddScoped<JournalService>();
+            builder.Services.AddScoped<DailyStreakService>();
+            builder.Services.AddScoped<PinAuthService>();
+            builder.Services.AddScoped<PdfExportService>();
+            builder.Services.AddScoped<CalendarViewModel>();
+            builder.Services.AddScoped<JournalListViewModel>();
+            builder.Services.AddScoped<StreakViewModel>();
+            builder.Services.AddScoped<PinViewModel>();
+            builder.Services.AddScoped<PdfExportViewModel>();
 
 #if DEBUG
     		builder.Services.AddBlazorWebViewDeveloperTools();
@@ -47,6 +58,7 @@ namespace JournalDaily
                 // swallow startup DB exceptions to avoid crashing the UI; errors will surface in logs
             }
 
+            Current = app;
             return app;
         }
     }
