@@ -4,15 +4,11 @@ namespace JournalDaily
 {
     public partial class App : Application
     {
-        private PinAuthService _pinAuthService;
         private bool _pinAuthenticated = false;
 
         public App()
         {
             InitializeComponent();
-
-            // Get PIN service from DI container
-            _pinAuthService = MauiProgram.Current.Services.GetService<PinAuthService>();
 
             MainPage = new MainPage();
         }
@@ -20,14 +16,7 @@ namespace JournalDaily
         protected override void OnStart()
         {
             base.OnStart();
-            System.Diagnostics.Debug.WriteLine("[App] OnStart - Checking PIN authentication");
-
-            // Check if PIN is required
-            if (_pinAuthService.IsPinSetupComplete() && !_pinAuthenticated)
-            {
-                System.Diagnostics.Debug.WriteLine("[App] PIN setup exists, navigating to PIN auth");
-                Shell.Current?.GoToAsync("pin-auth", true);
-            }
+            System.Diagnostics.Debug.WriteLine("[App] OnStart - Application started");
         }
 
         /// <summary>

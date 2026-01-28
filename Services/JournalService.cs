@@ -153,14 +153,43 @@ namespace JournalDaily.Services
 
             if (!string.IsNullOrWhiteSpace(query))
             {
-                q = q.Where(e => (e.Title ?? "").Contains(query) || (e.Content ?? "").Contains(query));
+                var lowerQuery = query.ToLower();
+                q = q.Where(e => (e.Title ?? "").ToLower().Contains(lowerQuery) || (e.Content ?? "").ToLower().Contains(lowerQuery));
             }
             if (from.HasValue) q = q.Where(e => e.EntryDate >= from.Value.Date);
             if (to.HasValue) q = q.Where(e => e.EntryDate <= to.Value.Date);
-            if (moods != null && moods.Any()) q = q.Where(e => e.EntryMoods.Any(em => moods.Contains(em.Mood!.Name)));
-            if (tags != null && tags.Any()) q = q.Where(e => e.EntryTags.Any(et => tags.Contains(et.Tag!.Name)));
+            if (moods != null && moods.Any())
+            {
+                var moodList = moods.Where(m => !string.IsNullOrWhiteSpace(m)).ToList();
+                if (moodList.Any())
+                    q = q.Where(e => e.EntryMoods.Any(em => moodList.Contains(em.Mood!.Name)));
+            }
+            if (tags != null && tags.Any())
+            {
+                var tagList = tags.Where(t => !string.IsNullOrWhiteSpace(t)).ToList();
+                if (tagList.Any())
+                    q = q.Where(e => e.EntryTags.Any(et => tagList.Contains(et.Tag!.Name)));
+            }
 
             return await q.OrderByDescending(e => e.EntryDate).ToListAsync();
+        }
+
+        public async Task<List<string>> GetAllMoodsAsync()
+        {
+            return await _db.Moods
+                .Select(m => m.Name)
+                .Distinct()
+                .OrderBy(m => m)
+                .ToListAsync();
+        }
+
+        public async Task<List<string>> GetAllTagsAsync()
+        {
+            return await _db.Tags
+                .Select(t => t.Name)
+                .Distinct()
+                .OrderBy(t => t)
+                .ToListAsync();
         }
     }
 }

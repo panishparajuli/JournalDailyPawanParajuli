@@ -1,0 +1,219 @@
+@using JournalDaily.Services
+@using JournalDaily.Models
+@inject ThemeService ThemeService
+@implements IDisposable
+
+<div class="theme-selector">
+    <div class="theme-selector-header">
+        <label>🎨 Theme:</label>
+        <select @onchange="HandleThemeChange" class="theme-dropdown" value="@ThemeService.CurrentTheme.Name">
+            @foreach (var theme in ThemeService.AvailableThemes)
+            {
+                <option value="@theme">@theme</option>
+            }
+        </select>
+    </div>
+    
+    @if (ThemeService.CurrentTheme.Mode == ThemeMode.Custom)
+    {
+        <div class="custom-theme-options">
+            <details>
+                <summary>✏️ Customize Colors</summary>
+                <div class="color-picker-grid">
+                    <div class="color-picker-item">
+                        <label>Primary Color:</label>
+                        <input type="color" 
+                               value="@ThemeService.CurrentTheme.Colors.PrimaryColor"
+                               @onchange="@((ChangeEventArgs e) => UpdateColor("primary", (string)e.Value!))"
+                               class="color-input" />
+                    </div>
+                    <div class="color-picker-item">
+                        <label>Secondary Color:</label>
+                        <input type="color" 
+                               value="@ThemeService.CurrentTheme.Colors.SecondaryColor"
+                               @onchange="@((ChangeEventArgs e) => UpdateColor("secondary", (string)e.Value!))"
+                               class="color-input" />
+                    </div>
+                    <div class="color-picker-item">
+                        <label>Background Color:</label>
+                        <input type="color" 
+                               value="@ThemeService.CurrentTheme.Colors.BackgroundColor"
+                               @onchange="@((ChangeEventArgs e) => UpdateColor("background", (string)e.Value!))"
+                               class="color-input" />
+                    </div>
+                    <div class="color-picker-item">
+                        <label>Text Color:</label>
+                        <input type="color" 
+                               value="@ThemeService.CurrentTheme.Colors.TextColor"
+                               @onchange="@((ChangeEventArgs e) => UpdateColor("text", (string)e.Value!))"
+                               class="color-input" />
+                    </div>
+                    <div class="color-picker-item">
+                        <label>Success Color:</label>
+                        <input type="color" 
+                               value="@ThemeService.CurrentTheme.Colors.SuccessColor"
+                               @onchange="@((ChangeEventArgs e) => UpdateColor("success", (string)e.Value!))"
+                               class="color-input" />
+                    </div>
+                    <div class="color-picker-item">
+                        <label>Error Color:</label>
+                        <input type="color" 
+                               value="@ThemeService.CurrentTheme.Colors.ErrorColor"
+                               @onchange="@((ChangeEventArgs e) => UpdateColor("error", (string)e.Value!))"
+                               class="color-input" />
+                    </div>
+                </div>
+            </details>
+        </div>
+    }
+</div>
+
+<style>
+    .theme-selector {
+        background: var(--surface-color, #f8f9fa);
+        border-radius: 6px;
+        padding: 12px;
+        border: 1px solid var(--border-color, #dee2e6);
+    }
+
+    .theme-selector-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 12px;
+    }
+
+    .theme-selector-header label {
+        font-weight: 600;
+        color: var(--text-color, #333);
+        margin: 0;
+        white-space: nowrap;
+    }
+
+    .theme-dropdown {
+        flex: 1;
+        padding: 8px 12px;
+        border: 1px solid var(--border-color, #dee2e6);
+        border-radius: 4px;
+        background: var(--background-color, #fff);
+        color: var(--text-color, #333);
+        font-size: 14px;
+        cursor: pointer;
+    }
+
+    .theme-dropdown:focus {
+        outline: none;
+        border-color: var(--primary-color, #007bff);
+        box-shadow: 0 0 0 3px var(--primary-light, #e7f1ff);
+    }
+
+    .custom-theme-options {
+        margin-top: 12px;
+    }
+
+    .custom-theme-options details {
+        cursor: pointer;
+    }
+
+    .custom-theme-options summary {
+        padding: 8px 12px;
+        background: var(--primary-light, #e7f1ff);
+        border-radius: 4px;
+        color: var(--primary-color, #007bff);
+        font-weight: 600;
+        user-select: none;
+    }
+
+    .custom-theme-options summary:hover {
+        background: var(--primary-color, #007bff);
+        color: white;
+    }
+
+    .color-picker-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 12px;
+        padding: 12px;
+        background: var(--surface-color, #f8f9fa);
+        border-radius: 4px;
+        margin-top: 8px;
+    }
+
+    .color-picker-item {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .color-picker-item label {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text-secondary-color, #666);
+    }
+
+    .color-input {
+        width: 100%;
+        height: 36px;
+        border: 1px solid var(--border-color, #dee2e6);
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    .color-input:hover {
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+</style>
+
+@code {
+    protected override void OnInitialized()
+    {
+        ThemeService.ThemeChanged += OnThemeChanged;
+    }
+
+    private void HandleThemeChange(ChangeEventArgs e)
+    {
+        if (e.Value is string themeName)
+        {
+            ThemeService.SetTheme(themeName);
+        }
+    }
+
+    private void UpdateColor(string colorProperty, string colorValue)
+    {
+        var colors = ThemeService.CurrentTheme.Colors;
+        
+        switch (colorProperty)
+        {
+            case "primary":
+                colors.PrimaryColor = colorValue;
+                break;
+            case "secondary":
+                colors.SecondaryColor = colorValue;
+                break;
+            case "background":
+                colors.BackgroundColor = colorValue;
+                break;
+            case "text":
+                colors.TextColor = colorValue;
+                break;
+            case "success":
+                colors.SuccessColor = colorValue;
+                break;
+            case "error":
+                colors.ErrorColor = colorValue;
+                break;
+        }
+
+        ThemeService.SetCustomThemeColors(colors);
+    }
+
+    private void OnThemeChanged(object? sender, ThemeChangedEventArgs e)
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    void IDisposable.Dispose()
+    {
+        ThemeService.ThemeChanged -= OnThemeChanged;
+    }
+}

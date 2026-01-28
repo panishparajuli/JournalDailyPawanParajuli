@@ -25,35 +25,64 @@ else
 
     protected override void OnInitialized()
     {
-        base.OnInitialized();
-        CheckPinRequirement();
-        Navigation.LocationChanged += OnLocationChanged;
+        try
+        {
+            base.OnInitialized();
+            CheckPinRequirement();
+            Navigation.LocationChanged += OnLocationChanged;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[Routes] ERROR in OnInitialized: {ex}");
+        }
     }
 
     protected override void OnAfterRender(bool firstRender)
     {
-        base.OnAfterRender(firstRender);
-        if (RequirePinAuth && !IsPinPage)
+        try
         {
-            Navigation.NavigateTo("/pin-setup", replace: true);
+            base.OnAfterRender(firstRender);
+            if (RequirePinAuth && !IsPinPage)
+            {
+                Navigation.NavigateTo("/pin-setup", replace: true);
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[Routes] ERROR in OnAfterRender: {ex}");
         }
     }
 
     private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
     {
-        CheckPinRequirement();
+        try
+        {
+            CheckPinRequirement();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[Routes] ERROR in OnLocationChanged: {ex}");
+        }
     }
 
     private void CheckPinRequirement()
     {
-        // Check if this is a PIN page
-        var currentPath = new Uri(Navigation.Uri).AbsolutePath;
-        IsPinPage = currentPath.Contains("pin-auth") || currentPath.Contains("pin-setup");
+        try
+        {
+            // Check if this is a PIN page
+            var currentPath = new Uri(Navigation.Uri).AbsolutePath;
+            IsPinPage = currentPath.Contains("pin-auth") || currentPath.Contains("pin-setup");
 
-        // Check if PIN is required
-        RequirePinAuth = PinAuthService.IsPinSetupComplete() && !IsPinPage;
+            // Check if PIN is required
+            RequirePinAuth = PinAuthService.IsPinSetupComplete() && !IsPinPage;
 
-        System.Diagnostics.Debug.WriteLine($"[Routes] Path: {currentPath}, RequirePinAuth: {RequirePinAuth}, IsPinPage: {IsPinPage}");
+            System.Diagnostics.Debug.WriteLine($"[Routes] Path: {currentPath}, RequirePinAuth: {RequirePinAuth}, IsPinPage: {IsPinPage}");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[Routes] ERROR in CheckPinRequirement: {ex}");
+            RequirePinAuth = false;
+        }
     }
 
     async ValueTask IAsyncDisposable.DisposeAsync()

@@ -33,6 +33,7 @@ namespace JournalDaily
             builder.Services.AddScoped<DailyStreakService>();
             builder.Services.AddScoped<PinAuthService>();
             builder.Services.AddScoped<PdfExportService>();
+            builder.Services.AddScoped<ThemeService>();
             builder.Services.AddScoped<CalendarViewModel>();
             builder.Services.AddScoped<JournalListViewModel>();
             builder.Services.AddScoped<StreakViewModel>();

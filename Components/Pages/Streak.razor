@@ -6,9 +6,21 @@
 
 <div class="streak-container">
     <div class="streak-header">
-        <h2>Your Journaling Streak</h2>
+        <h2>🔥 Your Journaling Streak</h2>
         <button class="refresh-button" @onclick="() => ViewModel?.RefreshCommand.Execute(null)">
             🔄 Refresh
+        </button>
+    </div>
+
+    <!-- View Toggle Buttons -->
+    <div class="view-toggle">
+        <button class="toggle-btn @(ViewModel?.SelectedView == "overview" ? "active" : "")"
+                @onclick="@((e) => ViewModel?.SwitchViewCommand.Execute("overview"))">
+            📊 Overview
+        </button>
+        <button class="toggle-btn @(ViewModel?.SelectedView == "calendar" ? "active" : "")"
+                @onclick="@((e) => ViewModel?.SwitchViewCommand.Execute("calendar"))">
+            📅 Calendar
         </button>
     </div>
 
@@ -34,115 +46,215 @@
     }
     else
     {
-        <div class="streak-cards">
-            <!-- Current Streak Card -->
-            <div class="streak-card current-streak">
-                <div class="streak-card-header">
-                    <h3>🔥 Current Streak</h3>
-                    @if (ViewModel.StreakData.IsStreakActive)
-                    {
-                        <span class="active-badge">Active</span>
-                    }
-                    else
-                    {
-                        <span class="inactive-badge">Broken</span>
-                    }
-                </div>
-                <div class="streak-card-content">
-                    <div class="big-number">@ViewModel.StreakData.CurrentStreak</div>
-                    <div class="unit">@(ViewModel.StreakData.CurrentStreak == 1 ? "day" : "days")</div>
-                    @if (ViewModel.StreakData.CurrentStreakStartDate.HasValue)
-                    {
-                        <div class="streak-info">
-                            Started: @ViewModel.StreakData.CurrentStreakStartDate.Value.ToString("MMM d, yyyy")
-                        </div>
-                    }
-                </div>
-            </div>
+        @if (ViewModel.SelectedView == "overview")
+        {
+            <div class="streak-cards">
+                <!-- Status Message -->
+                @if (!string.IsNullOrEmpty(ViewModel.StreakData.StatusMessage))
+                {
+                    <div class="status-message @(ViewModel.StreakData.IsStreakActive ? "active" : "broken")">
+                        <span class="status-icon">@(ViewModel.StreakData.IsStreakActive ? "✨" : "💔")</span>
+                        <span class="status-text">@ViewModel.StreakData.StatusMessage</span>
+                    </div>
+                }
 
-            <!-- Longest Streak Card -->
-            <div class="streak-card longest-streak">
-                <div class="streak-card-header">
-                    <h3>🏆 Longest Streak</h3>
-                </div>
-                <div class="streak-card-content">
-                    <div class="big-number">@ViewModel.StreakData.LongestStreak</div>
-                    <div class="unit">@(ViewModel.StreakData.LongestStreak == 1 ? "day" : "days")</div>
-                    @if (ViewModel.StreakData.LongestStreakStartDate.HasValue && ViewModel.StreakData.LongestStreakEndDate.HasValue)
-                    {
-                        <div class="streak-info">
-                            @ViewModel.StreakData.LongestStreakStartDate.Value.ToString("MMM d") -
-                            @ViewModel.StreakData.LongestStreakEndDate.Value.ToString("MMM d, yyyy")
-                        </div>
-                    }
-                </div>
-            </div>
-
-            <!-- Stats Cards -->
-            <div class="streak-card stats">
-                <h3>📊 Statistics</h3>
-                <div class="stat-row">
-                    <span class="stat-label">Total Entries:</span>
-                    <span class="stat-value">@ViewModel.StreakData.TotalDaysWithEntries</span>
-                </div>
-                <div class="stat-row">
-                    <span class="stat-label">Missed Days:</span>
-                    <span class="stat-value">@ViewModel.StreakData.MissedDays</span>
-                </div>
-                <div class="stat-row">
-                    <span class="stat-label">Total Span:</span>
-                    <span class="stat-value">@ViewModel.StreakData.TotalDaysSpan days</span>
-                </div>
-                <div class="stat-row">
-                    <span class="stat-label">Completion Rate:</span>
-                    <span class="stat-value">@{
-                        var rate = ViewModel.StreakData.TotalDaysSpan > 0
-                            ? ((ViewModel.StreakData.TotalDaysWithEntries / (double)ViewModel.StreakData.TotalDaysSpan) * 100)
-                            : 0;
-                    }@Math.Round(rate, 1)%</span>
-                </div>
-            </div>
-
-            <!-- Date Range Card -->
-            @if (ViewModel.StreakData.OldestEntryDate.HasValue && ViewModel.StreakData.MostRecentEntryDate.HasValue)
-            {
-                <div class="streak-card date-range">
-                    <h3>📅 Entry Timeline</h3>
-                    <div class="timeline">
-                        <div class="timeline-item">
-                            <span class="label">First Entry:</span>
-                            <span class="date">@ViewModel.StreakData.OldestEntryDate.Value.ToString("dddd, MMMM d, yyyy")</span>
-                        </div>
-                        <div class="timeline-item">
-                            <span class="label">Most Recent:</span>
-                            <span class="date">@ViewModel.StreakData.MostRecentEntryDate.Value.ToString("dddd, MMMM d, yyyy")</span>
+                <!-- Current Streak Card -->
+                <div class="streak-card current-streak">
+                    <div class="streak-card-header">
+                        <h3>🔥 Current Streak</h3>
+                        @if (ViewModel.StreakData.IsStreakActive)
+                        {
+                            <span class="active-badge">Active</span>
+                        }
+                        else
+                        {
+                            <span class="inactive-badge">Broken</span>
+                        }
+                    </div>
+                    <div class="streak-card-content">
+                        <div class="big-number">@ViewModel.StreakData.CurrentStreak</div>
+                        <div class="unit">@(ViewModel.StreakData.CurrentStreak == 1 ? "day" : "days")</div>
+                        @if (ViewModel.StreakData.CurrentStreakStartDate.HasValue)
+                        {
+                            <div class="streak-info">
+                                Started: @ViewModel.StreakData.CurrentStreakStartDate.Value.ToString("MMM d, yyyy")
+                            </div>
+                        }
+                        <div class="streak-progress">
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: @(Math.Min(100, (ViewModel.StreakData.CurrentStreak / Math.Max(1, ViewModel.StreakData.LongestStreak)) * 100))%"></div>
+                            </div>
+                            <small>@(ViewModel.StreakData.LongestStreak > 0 ? $"{((ViewModel.StreakData.CurrentStreak / (double)ViewModel.StreakData.LongestStreak) * 100):F0}% to longest streak" : "")</small>
                         </div>
                     </div>
                 </div>
-            }
 
-            <!-- Missed Days Card -->
-            @if (ViewModel.StreakData.MissedDays > 0 && ViewModel.StreakData.MissedDaysList.Any())
-            {
-                <div class="streak-card missed-days">
-                    <h3>📍 Missed Days (@ViewModel.StreakData.MissedDays)</h3>
-                    <div class="missed-days-list">
-                        @foreach (var missedDay in ViewModel.StreakData.MissedDaysList.Take(10))
+                <!-- Longest Streak Card -->
+                <div class="streak-card longest-streak">
+                    <div class="streak-card-header">
+                        <h3>🏆 Longest Streak</h3>
+                    </div>
+                    <div class="streak-card-content">
+                        <div class="big-number">@ViewModel.StreakData.LongestStreak</div>
+                        <div class="unit">@(ViewModel.StreakData.LongestStreak == 1 ? "day" : "days")</div>
+                        @if (ViewModel.StreakData.LongestStreakStartDate.HasValue && ViewModel.StreakData.LongestStreakEndDate.HasValue)
                         {
-                            <div class="missed-day">
-                                @missedDay.ToString("MMM d, yyyy (ddd)")
+                            <div class="streak-info">
+                                @ViewModel.StreakData.LongestStreakStartDate.Value.ToString("MMM d") -
+                                @ViewModel.StreakData.LongestStreakEndDate.Value.ToString("MMM d, yyyy")
                             </div>
                         }
-                        @if (ViewModel.StreakData.MissedDaysList.Count > 10)
+                        @if (ViewModel.StreakData.CurrentStreak == ViewModel.StreakData.LongestStreak && ViewModel.StreakData.IsStreakActive)
                         {
-                            <div class="more-indicator">
-                                +@(ViewModel.StreakData.MissedDaysList.Count - 10) more missed days
-                            </div>
+                            <div class="achievement-badge">🎯 Personal Record!</div>
                         }
                     </div>
                 </div>
-            }
-        </div>
+
+                <!-- Stats Cards -->
+                <div class="streak-card stats">
+                    <h3>📊 Statistics</h3>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-value">@ViewModel.StreakData.TotalDaysWithEntries</div>
+                            <div class="stat-label">Total Entries</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">@ViewModel.StreakData.MissedDays</div>
+                            <div class="stat-label">Missed Days</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">@ViewModel.StreakData.TotalStreaks</div>
+                            <div class="stat-label">Total Streaks</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">@ViewModel.StreakData.AverageStreakLength</div>
+                            <div class="stat-label">Avg. Streak</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">@ViewModel.StreakData.CompletionPercentage%</div>
+                            <div class="stat-label">Completion</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">@ViewModel.StreakData.TotalDaysSpan</div>
+                            <div class="stat-label">Days Tracked</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Date Range Card -->
+                @if (ViewModel.StreakData.OldestEntryDate.HasValue && ViewModel.StreakData.MostRecentEntryDate.HasValue)
+                {
+                    <div class="streak-card date-range">
+                        <h3>📅 Entry Timeline</h3>
+                        <div class="timeline">
+                            <div class="timeline-item">
+                                <span class="label">First Entry:</span>
+                                <span class="date">@ViewModel.StreakData.OldestEntryDate.Value.ToString("dddd, MMMM d, yyyy")</span>
+                            </div>
+                            <div class="timeline-item">
+                                <span class="label">Most Recent:</span>
+                                <span class="date">@ViewModel.StreakData.MostRecentEntryDate.Value.ToString("dddd, MMMM d, yyyy")</span>
+                            </div>
+                            <div class="timeline-spacer"></div>
+                            <div class="timeline-item">
+                                <span class="label">Total Time:</span>
+                                <span class="date">@GetTimeSpanDescription(ViewModel.StreakData.OldestEntryDate.Value, ViewModel.StreakData.MostRecentEntryDate.Value)</span>
+                            </div>
+                        </div>
+                    </div>
+                }
+
+                <!-- Missed Days Card -->
+                @if (ViewModel.StreakData.MissedDays > 0 && ViewModel.StreakData.MissedDaysList.Any())
+                {
+                    <div class="streak-card missed-days">
+                        <h3>📍 Missed Days (@ViewModel.StreakData.MissedDays)</h3>
+                        <div class="missed-days-list">
+                            @foreach (var missedDay in ViewModel.StreakData.MissedDaysList.Take(10))
+                            {
+                                <div class="missed-day">
+                                    @missedDay.ToString("MMM d, yyyy (ddd)")
+                                </div>
+                            }
+                            @if (ViewModel.StreakData.MissedDaysList.Count > 10)
+                            {
+                                <div class="more-indicator">
+                                    +@(ViewModel.StreakData.MissedDaysList.Count - 10) more missed days
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else if (ViewModel.SelectedView == "calendar")
+        {
+            <div class="calendar-view">
+                <div class="calendar-header">
+                    <button class="nav-btn" @onclick="() => ViewModel?.PreviousMonthCommand.Execute(null)">← Prev</button>
+                    <h3>@ViewModel.CurrentViewMonth.ToString("MMMM yyyy")</h3>
+                    <button class="nav-btn" @onclick="() => ViewModel?.NextMonthCommand.Execute(null)">Next →</button>
+                </div>
+
+                <div class="calendar-grid">
+                    <!-- Day headers -->
+                    <div class="day-header">Sun</div>
+                    <div class="day-header">Mon</div>
+                    <div class="day-header">Tue</div>
+                    <div class="day-header">Wed</div>
+                    <div class="day-header">Thu</div>
+                    <div class="day-header">Fri</div>
+                    <div class="day-header">Sat</div>
+
+                    <!-- Days -->
+                    @{
+                        var firstDay = new DateTime(ViewModel.CurrentViewMonth.Year, ViewModel.CurrentViewMonth.Month, 1);
+                        var lastDay = firstDay.AddMonths(1).AddDays(-1);
+                        var startDate = firstDay.AddDays(-(int)firstDay.DayOfWeek);
+                        var currentDate = startDate;
+
+                        for (int i = 0; i < 42; i++)
+                        {
+                            bool isCurrentMonth = currentDate.Month == ViewModel.CurrentViewMonth.Month;
+                            bool hasEntry = ViewModel.HasEntryOnDate(currentDate);
+                            bool isMissed = ViewModel.IsMissedDay(currentDate);
+                            bool isToday = ViewModel.IsToday(currentDate);
+                            bool isFuture = ViewModel.IsFutureDate(currentDate);
+
+                            <div class="calendar-day @(isCurrentMonth ? "current-month" : "other-month") @(hasEntry ? "has-entry" : "") @(isMissed ? "missed" : "") @(isToday ? "today" : "") @(isFuture ? "future" : "")">
+                                <span class="day-number">@currentDate.Day</span>
+                                @if (hasEntry)
+                                {
+                                    <span class="entry-indicator">✓</span>
+                                }
+                                @if (isMissed && isCurrentMonth)
+                                {
+                                    <span class="missed-indicator">✕</span>
+                                }
+                            </div>
+
+                            currentDate = currentDate.AddDays(1);
+                        }
+                    }
+                </div>
+
+                <div class="calendar-legend">
+                    <div class="legend-item">
+                        <div class="legend-color has-entry"></div>
+                        <span>Entry</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color today"></div>
+                        <span>Today</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color missed"></div>
+                        <span>Missed</span>
+                    </div>
+                </div>
+            </div>
+        }
     }
 </div>
 
@@ -153,6 +265,24 @@
     {
         ViewModel = new StreakViewModel(StreakService);
         await ViewModel.InitializeAsync();
+    }
+
+    private string GetTimeSpanDescription(DateTime start, DateTime end)
+    {
+        var timeSpan = end - start;
+        var days = timeSpan.Days;
+        var weeks = days / 7;
+        var months = days / 30;
+        var years = days / 365;
+
+        if (years > 0)
+            return $"{years}y {months % 12}m";
+        else if (months > 0)
+            return $"{months}m {weeks % 4}w";
+        else if (weeks > 0)
+            return $"{weeks}w {days % 7}d";
+        else
+            return $"{days} days";
     }
 
     async ValueTask IAsyncDisposable.DisposeAsync()

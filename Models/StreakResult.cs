@@ -63,5 +63,30 @@ namespace JournalDaily.Models
         /// Total days span from oldest to most recent entry.
         /// </summary>
         public int TotalDaysSpan { get; set; }
+
+        /// <summary>
+        /// Completion percentage (entries / total span * 100).
+        /// </summary>
+        public double CompletionPercentage { get; set; }
+
+        /// <summary>
+        /// Average streak length (total entries / number of streaks).
+        /// </summary>
+        public double AverageStreakLength { get; set; }
+
+        /// <summary>
+        /// Number of distinct streaks (chains).
+        /// </summary>
+        public int TotalStreaks { get; set; }
+
+        /// <summary>
+        /// Estimated days until streak is lost (if current streak is active).
+        /// </summary>
+        public int DaysUntilStreakLost { get; set; }
+
+        /// <summary>
+        /// Streak status message for UI display.
+        /// </summary>
+        public string StatusMessage { get; set; } = string.Empty;
     }
 }

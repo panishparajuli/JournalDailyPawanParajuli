@@ -2,42 +2,122 @@
 @using JournalDaily.ViewModels
 @using JournalDaily.Services
 @inject JournalService JournalService
+@inject JournalListViewModel ViewModel
 @implements IAsyncDisposable
 
 <div class="journal-list-container">
     <div class="journal-header">
         <h2>Journal Entries</h2>
-        <button class="refresh-button" @onclick="() => ViewModel?.RefreshCommand.Execute(null)">
+        <button class="refresh-button" @onclick="() => ViewModel.RefreshCommand.Execute(null)">
             🔄 Refresh
         </button>
     </div>
 
-    @if (ViewModel?.IsLoading ?? false)
+    <!-- Search and Filter Section -->
+    <div class="search-filter-section">
+        <div class="search-box">
+            <input type="text" 
+                   placeholder="🔍 Search by title or content..." 
+                   @bind="ViewModel.SearchQuery"
+                   class="search-input" />
+        </div>
+
+        <div class="filter-controls">
+            <div class="filter-group">
+                <label>From Date:</label>
+                <input type="date" 
+                       @bind="ViewModel.FilterDateFrom"
+                       class="filter-input" />
+            </div>
+
+            <div class="filter-group">
+                <label>To Date:</label>
+                <input type="date" 
+                       @bind="ViewModel.FilterDateTo"
+                       class="filter-input" />
+            </div>
+
+            <div class="filter-group mood-filter">
+                <label>Moods:</label>
+                <div class="checkboxes-container">
+                    @if (ViewModel.AvailableMoods?.Any() ?? false)
+                    {
+                        @foreach (var mood in ViewModel.AvailableMoods)
+                        {
+                            <label class="checkbox-label">
+                                <input type="checkbox" 
+                                       @onchange="@((ChangeEventArgs e) => ToggleMood(mood, (bool)e.Value!))"
+                                       checked="@(ViewModel.SelectedMoods?.Contains(mood) ?? false)" />
+                                <span>@mood</span>
+                            </label>
+                        }
+                    }
+                    else
+                    {
+                        <span class="no-options">No moods available</span>
+                    }
+                </div>
+            </div>
+
+            <div class="filter-group tag-filter">
+                <label>Tags:</label>
+                <div class="checkboxes-container">
+                    @if (ViewModel.AvailableTags?.Any() ?? false)
+                    {
+                        @foreach (var tag in ViewModel.AvailableTags.Take(10))
+                        {
+                            <label class="checkbox-label">
+                                <input type="checkbox" 
+                                       @onchange="@((ChangeEventArgs e) => ToggleTag(tag, (bool)e.Value!))"
+                                       checked="@(ViewModel.SelectedTags?.Contains(tag) ?? false)" />
+                                <span>#@tag</span>
+                            </label>
+                        }
+                        @if (ViewModel.AvailableTags.Count > 10)
+                        {
+                            <span class="more-tags">+@(ViewModel.AvailableTags.Count - 10) more</span>
+                        }
+                    }
+                    else
+                    {
+                        <span class="no-options">No tags available</span>
+                    }
+                </div>
+            </div>
+
+            <button class="clear-filters-btn" 
+                    @onclick="() => ViewModel.ClearFiltersCommand.Execute(null)">
+                ✕ Clear Filters
+            </button>
+        </div>
+    </div>
+
+    @if (ViewModel.IsLoading)
     {
         <div class="loading-state">
             <div class="spinner"></div>
             <p>Loading entries...</p>
         </div>
     }
-    else if (!string.IsNullOrEmpty(ViewModel?.ErrorMessage))
+    else if (!string.IsNullOrEmpty(ViewModel.ErrorMessage))
     {
         <div class="error-state">
             <p>⚠️ @ViewModel.ErrorMessage</p>
-            <button class="btn-retry" @onclick="() => ViewModel?.RefreshCommand.Execute(null)">Retry</button>
+            <button class="btn-retry" @onclick="() => ViewModel.RefreshCommand.Execute(null)">Retry</button>
         </div>
     }
-    else if (!ViewModel?.CurrentPageEntries.Any() ?? false)
+    else if (!ViewModel.CurrentPageEntries.Any())
     {
         <div class="empty-state">
             <div class="empty-icon">📓</div>
-            <h3>No Entries Yet</h3>
-            <p>Start journaling to see your entries here.</p>
+            <h3>No Entries Found</h3>
+            <p>@(HasActiveFilters() ? "Try adjusting your search or filters." : "Start journaling to see your entries here.")</p>
         </div>
     }
     else
     {
         <div class="entries-list">
-            @foreach (var entry in ViewModel?.CurrentPageEntries ?? new System.Collections.ObjectModel.ObservableCollection<JournalEntry>())
+            @foreach (var entry in ViewModel.CurrentPageEntries)
             {
                 <div class="entry-card">
                     <div class="entry-card-header">
@@ -90,23 +170,23 @@
 
         <div class="pagination-container">
             <div class="pagination-info">
-                <p>@ViewModel?.PageInfo</p>
+                <p>@ViewModel.PageInfo</p>
             </div>
 
             <div class="pagination-controls">
                 <button class="nav-button" 
-                        @onclick="() => ViewModel?.PreviousPageCommand.Execute(null)" 
-                        disabled="@(!(ViewModel?.HasPreviousPage ?? false))">
+                        @onclick="() => ViewModel.PreviousPageCommand.Execute(null)" 
+                        disabled="@(!ViewModel.HasPreviousPage)">
                     ← Previous
                 </button>
 
                 <div class="page-indicator">
-                    Page @((ViewModel?.CurrentPageIndex ?? 0) + 1) of @(ViewModel?.TotalPages ?? 0)
+                    Page @(ViewModel.CurrentPageIndex + 1) of @ViewModel.TotalPages
                 </div>
 
                 <button class="nav-button" 
-                        @onclick="() => ViewModel?.NextPageCommand.Execute(null)" 
-                        disabled="@(!(ViewModel?.HasNextPage ?? false))">
+                        @onclick="() => ViewModel.NextPageCommand.Execute(null)" 
+                        disabled="@(!ViewModel.HasNextPage)">
                     Next →
                 </button>
             </div>
@@ -115,12 +195,40 @@
 </div>
 
 @code {
-    private JournalListViewModel? ViewModel { get; set; }
-
     protected override async Task OnInitializedAsync()
     {
-        ViewModel = new JournalListViewModel(JournalService);
         await ViewModel.InitializeAsync();
+    }
+
+    private void ToggleMood(string mood, bool isSelected)
+    {
+        var moods = new List<string>(ViewModel.SelectedMoods ?? new());
+        if (isSelected && !moods.Contains(mood))
+            moods.Add(mood);
+        else if (!isSelected)
+            moods.Remove(mood);
+        
+        ViewModel.SelectedMoods = moods;
+    }
+
+    private void ToggleTag(string tag, bool isSelected)
+    {
+        var tags = new List<string>(ViewModel.SelectedTags ?? new());
+        if (isSelected && !tags.Contains(tag))
+            tags.Add(tag);
+        else if (!isSelected)
+            tags.Remove(tag);
+        
+        ViewModel.SelectedTags = tags;
+    }
+
+    private bool HasActiveFilters()
+    {
+        return !string.IsNullOrEmpty(ViewModel.SearchQuery) ||
+               ViewModel.FilterDateFrom.HasValue ||
+               ViewModel.FilterDateTo.HasValue ||
+               (ViewModel.SelectedMoods?.Any() ?? false) ||
+               (ViewModel.SelectedTags?.Any() ?? false);
     }
 
     async ValueTask IAsyncDisposable.DisposeAsync()
